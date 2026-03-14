@@ -11,3 +11,104 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum TradeType {
+  BUY
+  SELL
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  fullname  String
+  createdAt DateTime @default(now())
+
+  wallet    Wallet?
+  trades    Trade[]
+  holdings  Holding[]
+  cards     Card[]   @relation("Creator")
+}
+
+model Wallet {
+  id        String          @id @default(cuid())
+  userId    String          @unique
+  user      User            @relation(fields: [userId], references: [id])
+  balance   Decimal         @default(1000) @db.Decimal(18, 4)
+  createdAt DateTime        @default(now())
+
+  ledger    BalanceLedger[]
+  rescues   RescueLog[]
+}
+
+model Card {
+  id            String    @id @default(cuid())
+  name          String
+  creatorId     String
+  creator       User      @relation("Creator", fields: [creatorId], references: [id])
+  basePrice     Decimal   @db.Decimal(18, 4)
+  maxPrice      Decimal   @db.Decimal(18, 4)
+  sensitivity   Decimal   @db.Decimal(10, 6)
+  currentSupply Decimal   @default(0) @db.Decimal(18, 4)
+  version       Int       @default(0)
+  createdAt     DateTime  @default(now())
+
+  trades    Trade[]
+  holdings  Holding[]
+
+  @@index([createdAt])
+}
+
+model Trade {
+  id           String    @id @default(cuid())
+  playerId     String
+  player       User      @relation(fields: [playerId], references: [id])
+  cardId       String
+  card         Card      @relation(fields: [cardId], references: [id])
+  type         TradeType
+  amount       Decimal   @db.Decimal(18, 4)
+  totalCost    Decimal   @db.Decimal(18, 4)
+  supplyBefore Decimal   @db.Decimal(18, 4)
+  supplyAfter  Decimal   @db.Decimal(18, 4)
+  createdAt    DateTime  @default(now())
+
+  ledger       BalanceLedger[]
+
+  @@index([cardId, createdAt])
+  @@index([playerId, createdAt])
+}
+
+model Holding {
+  id       String  @id @default(cuid())
+  playerId String
+  player   User    @relation(fields: [playerId], references: [id])
+  cardId   String
+  card     Card    @relation(fields: [cardId], references: [id])
+  quantity Decimal @db.Decimal(18, 4)
+
+  @@unique([playerId, cardId])
+}
+
+model BalanceLedger {
+  id        String   @id @default(cuid())
+  walletId  String
+  wallet    Wallet   @relation(fields: [walletId], references: [id])
+  delta     Decimal  @db.Decimal(18, 4)
+  reason    String
+  tradeId   String?
+  trade     Trade?   @relation(fields: [tradeId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([walletId, createdAt])
+}
+
+model RescueLog {
+  id        String   @id @default(cuid())
+  walletId  String
+  wallet    Wallet   @relation(fields: [walletId], references: [id])
+  amount    Decimal  @default(50) @db.Decimal(18, 4)
+  seasonId  String
+  createdAt DateTime @default(now())
+
+  @@unique([walletId, seasonId])
+  @@index([walletId])
+}
