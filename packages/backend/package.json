@@ -7,17 +7,23 @@
 		"dev": "bun --watch run src/index.ts"
 	},
 	"devDependencies": {
-		"@types/bun": "latest"
+		"@types/bun": "latest",
+		"@types/pg": "^8.18.0",
+		"prisma": "^7.5.0"
 	},
 	"peerDependencies": {
 		"typescript": "^5"
 	},
 	"dependencies": {
+		"@prisma/adapter-pg": "^7.5.0",
+		"@prisma/client": "^7.5.0",
 		"@types/cors": "^2.8.19",
 		"@types/express": "^5.0.6",
 		"cookie-parser": "^1.4.7",
 		"cors": "^2.8.6",
+		"dotenv": "^17.3.1",
 		"express": "^5.2.1",
-		"helmet": "^8.1.0"
+		"helmet": "^8.1.0",
+		"pg": "^8.20.0"
 	}
 }
