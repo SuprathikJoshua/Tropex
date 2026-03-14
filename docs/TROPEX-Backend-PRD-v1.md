@@ -1,5 +1,7 @@
-# 🍌 Tropex
+# Tropex
+
 ## Backend PRD — Version 1.0
+
 **Product Requirements Document · Core Trading Engine · Backend Engineering Spec**
 
 > **Author:** Suprathik Joshua · IIIT Lucknow
@@ -11,16 +13,16 @@
 
 ## Document Meta
 
-| Field | Value |
-|---|---|
-| Document Type | PRD — Backend |
-| Version | V1.0 — Core Trading Engine |
-| Scope | All API endpoints, business logic, DB schema, caching, and realtime for V1 |
-| Out of Scope | Frontend UI, components, animations — see Frontend PRD |
-| API Contract | All endpoints conform to this spec. Frontend PRD depends on these contracts. |
-| Runtime | Bun 1.x — drop-in Node.js replacement, faster startup, built-in TypeScript |
-| Data Integrity | ACID compliance required for ALL financial operations |
-| Core Rule | **No trade price is ever accepted from the client. All prices computed server-side.** |
+| Field          | Value                                                                                 |
+| -------------- | ------------------------------------------------------------------------------------- |
+| Document Type  | PRD — Backend                                                                         |
+| Version        | V1.0 — Core Trading Engine                                                            |
+| Scope          | All API endpoints, business logic, DB schema, caching, and realtime for V1            |
+| Out of Scope   | Frontend UI, components, animations — see Frontend PRD                                |
+| API Contract   | All endpoints conform to this spec. Frontend PRD depends on these contracts.          |
+| Runtime        | Bun 1.x — drop-in Node.js replacement, faster startup, built-in TypeScript            |
+| Data Integrity | ACID compliance required for ALL financial operations                                 |
+| Core Rule      | **No trade price is ever accepted from the client. All prices computed server-side.** |
 
 ---
 
@@ -28,16 +30,17 @@
 
 > One of the most important things to understand before writing any code.
 
-| Service | What It Does | What It Does NOT Do |
-|---|---|---|
-| **Neon (Postgres)** | Stores ALL data permanently — every player, card, trade, holding, ledger row | Nothing else |
-| **Prisma ORM** | Type-safe interface to Neon — all DB queries go through Prisma | Never bypassed with raw SQL unless absolutely necessary |
-| **Upstash Redis** | Leaderboard sorted set · rate limiting counters · 1s price cache · rescue season lock | Never stores permanent data |
-| **Supabase Auth** | Issues JWTs on login/signup · validates sessions · Row Level Security on Neon tables | Does NOT store your game data |
-| **Supabase Realtime** | Broadcasts WebSocket events to all connected clients after trades | Does NOT store anything |
-| **Vercel** | Hosts Next.js app and API routes as serverless functions | Does NOT run long-lived processes |
+| Service               | What It Does                                                                          | What It Does NOT Do                                     |
+| --------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| **Neon (Postgres)**   | Stores ALL data permanently — every player, card, trade, holding, ledger row          | Nothing else                                            |
+| **Prisma ORM**        | Type-safe interface to Neon — all DB queries go through Prisma                        | Never bypassed with raw SQL unless absolutely necessary |
+| **Upstash Redis**     | Leaderboard sorted set · rate limiting counters · 1s price cache · rescue season lock | Never stores permanent data                             |
+| **Supabase Auth**     | Issues JWTs on login/signup · validates sessions · Row Level Security on Neon tables  | Does NOT store your game data                           |
+| **Supabase Realtime** | Broadcasts WebSocket events to all connected clients after trades                     | Does NOT store anything                                 |
+| **Vercel**            | Hosts Next.js app and API routes as serverless functions                              | Does NOT run long-lived processes                       |
 
 **The flow in plain English:**
+
 > Player makes a trade → API Route validates → Prisma writes to Neon → Redis updates leaderboard + cache → Supabase Realtime broadcasts to all browsers
 
 ---
@@ -78,25 +81,25 @@ Supabase Realtime broadcast
 
 ### What Each Table Stores
 
-| Table | What It Stores | One Row = |
-|---|---|---|
-| `Player` | Every registered player's account data | One person |
-| `Card` | Every tradeable card and its bonding curve parameters | One asset |
-| `Trade` | Every buy/sell action ever executed — never modified | One trade action |
-| `Holding` | Who currently owns how much of which card | One player's stake in one card |
-| `BalanceLedger` | Every balance change ever — append only | One balance event |
-| `RescueLog` | Record of every rescue grant given — one per player per season | One rescue event |
+| Table           | What It Stores                                                 | One Row =                      |
+| --------------- | -------------------------------------------------------------- | ------------------------------ |
+| `Player`        | Every registered player's account data                         | One person                     |
+| `Card`          | Every tradeable card and its bonding curve parameters          | One asset                      |
+| `Trade`         | Every buy/sell action ever executed — never modified           | One trade action               |
+| `Holding`       | Who currently owns how much of which card                      | One player's stake in one card |
+| `BalanceLedger` | Every balance change ever — append only                        | One balance event              |
+| `RescueLog`     | Record of every rescue grant given — one per player per season | One rescue event               |
 
 ### Who Can See What
 
-| Table | Player sees | Other players see |
-|---|---|---|
-| `Player` | Own row (balance, streak, username) | Username + portfolio value only (for leaderboard) |
-| `Card` | All cards (public marketplace) | All cards (public marketplace) |
-| `Trade` | Own trade history | Nothing — private |
-| `Holding` | Own holdings | Nothing — private |
-| `BalanceLedger` | Reflected in balance number only — never raw rows | Nothing |
-| `RescueLog` | "Rescued this season" badge — never raw row | Just the badge on profile |
+| Table           | Player sees                                       | Other players see                                 |
+| --------------- | ------------------------------------------------- | ------------------------------------------------- |
+| `Player`        | Own row (balance, streak, username)               | Username + portfolio value only (for leaderboard) |
+| `Card`          | All cards (public marketplace)                    | All cards (public marketplace)                    |
+| `Trade`         | Own trade history                                 | Nothing — private                                 |
+| `Holding`       | Own holdings                                      | Nothing — private                                 |
+| `BalanceLedger` | Reflected in balance number only — never raw rows | Nothing                                           |
+| `RescueLog`     | "Rescued this season" badge — never raw row       | Just the badge on profile                         |
 
 > **Row Level Security (RLS)** is enforced at the Postgres level via Supabase Auth. Even if someone calls the API with another player's ID, the database itself refuses to return that data.
 
@@ -230,86 +233,89 @@ When a player **buys**, supply goes up and price rises. When a player **sells**,
 
 ### Functions Required
 
-| Function | What It Does | Algorithm |
-|---|---|---|
-| `getPrice(supply, params)` | Price at a given supply level | `P(s) = base + (max-base) / (1 + e^(-k*(s - midpoint)))` where midpoint = totalSupply / 2 |
-| `getBuyCost(supply, amount, params)` | Total BC cost to buy `amount` units from current supply | Numerical integration of `getPrice` over [supply, supply+amount] using 200 steps |
-| `getSellReturn(supply, amount, params)` | Total BC received for selling `amount` units | Numerical integration over [supply-amount, supply] — always less than buy cost |
-| `getSlippage(orderSize, liquidity)` | Slippage multiplier for large orders | `min(0.15, (orderSize/liquidity)^1.5 × 0.1)` — returns 0.0 to 0.15 |
-| `applySlippage(cost, slippage)` | Apply slippage to a raw cost | `cost × (1 + slippage)` |
+| Function                                | What It Does                                            | Algorithm                                                                                 |
+| --------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `getPrice(supply, params)`              | Price at a given supply level                           | `P(s) = base + (max-base) / (1 + e^(-k*(s - midpoint)))` where midpoint = totalSupply / 2 |
+| `getBuyCost(supply, amount, params)`    | Total BC cost to buy `amount` units from current supply | Numerical integration of `getPrice` over [supply, supply+amount] using 200 steps          |
+| `getSellReturn(supply, amount, params)` | Total BC received for selling `amount` units            | Numerical integration over [supply-amount, supply] — always less than buy cost            |
+| `getSlippage(orderSize, liquidity)`     | Slippage multiplier for large orders                    | `min(0.15, (orderSize/liquidity)^1.5 × 0.1)` — returns 0.0 to 0.15                        |
+| `applySlippage(cost, slippage)`         | Apply slippage to a raw cost                            | `cost × (1 + slippage)`                                                                   |
 
 ### Required Test Cases (write before wiring to API)
 
-| Test | Expected |
-|---|---|
-| `getPrice(supply=0, params)` | Within 1% of `basePrice` |
-| `getPrice(supply=midpoint, params)` | Exactly `(basePrice + maxPrice) / 2` |
-| `getPrice(supply=totalSupply, params)` | Within 1% of `maxPrice` |
-| `getBuyCost(0, 1000, params)` | ≈ 1000 × `getBuyCost(0, 1, params)` ±0.1% |
-| `getSellReturn` always < `getBuyCost` for same inputs | Always |
-| `getSlippage(0, 1000)` | 0 |
-| `getSlippage(1000, 1000)` | 0.1 |
-| `getSlippage(10000, 1000)` | 0.15 (capped) |
+| Test                                                  | Expected                                  |
+| ----------------------------------------------------- | ----------------------------------------- |
+| `getPrice(supply=0, params)`                          | Within 1% of `basePrice`                  |
+| `getPrice(supply=midpoint, params)`                   | Exactly `(basePrice + maxPrice) / 2`      |
+| `getPrice(supply=totalSupply, params)`                | Within 1% of `maxPrice`                   |
+| `getBuyCost(0, 1000, params)`                         | ≈ 1000 × `getBuyCost(0, 1, params)` ±0.1% |
+| `getSellReturn` always < `getBuyCost` for same inputs | Always                                    |
+| `getSlippage(0, 1000)`                                | 0                                         |
+| `getSlippage(1000, 1000)`                             | 0.1                                       |
+| `getSlippage(10000, 1000)`                            | 0.15 (capped)                             |
 
 ### Reference Implementation
 
 ```typescript
 // /lib/pricing-engine.ts
-import Decimal from 'decimal.js';
+import Decimal from "decimal.js";
 
 interface CurveParams {
-  basePrice:   Decimal;
-  maxPrice:    Decimal;
-  sensitivity: Decimal;
-  totalSupply: Decimal;
+	basePrice: Decimal;
+	maxPrice: Decimal;
+	sensitivity: Decimal;
+	totalSupply: Decimal;
 }
 
 export function getPrice(supply: Decimal, p: CurveParams): Decimal {
-  const midpoint = p.totalSupply.div(2);
-  const exponent = p.sensitivity.negated().mul(supply.minus(midpoint)).toNumber();
-  const sigmoid  = new Decimal(1).div(new Decimal(1).plus(Math.exp(exponent)));
-  return p.basePrice.plus(p.maxPrice.minus(p.basePrice).mul(sigmoid));
+	const midpoint = p.totalSupply.div(2);
+	const exponent = p.sensitivity
+		.negated()
+		.mul(supply.minus(midpoint))
+		.toNumber();
+	const sigmoid = new Decimal(1).div(new Decimal(1).plus(Math.exp(exponent)));
+	return p.basePrice.plus(p.maxPrice.minus(p.basePrice).mul(sigmoid));
 }
 
 export function getBuyCost(
-  currentSupply: Decimal,
-  amount: Decimal,
-  p: CurveParams
+	currentSupply: Decimal,
+	amount: Decimal,
+	p: CurveParams,
 ): Decimal {
-  const STEPS = 200;
-  const delta = amount.div(STEPS);
-  let total = new Decimal(0);
-  for (let i = 0; i < STEPS; i++) {
-    total = total.plus(
-      getPrice(currentSupply.plus(delta.mul(i)), p).mul(delta)
-    );
-  }
-  return total;
+	const STEPS = 200;
+	const delta = amount.div(STEPS);
+	let total = new Decimal(0);
+	for (let i = 0; i < STEPS; i++) {
+		total = total.plus(
+			getPrice(currentSupply.plus(delta.mul(i)), p).mul(delta),
+		);
+	}
+	return total;
 }
 
 export function getSellReturn(
-  currentSupply: Decimal,
-  amount: Decimal,
-  p: CurveParams
+	currentSupply: Decimal,
+	amount: Decimal,
+	p: CurveParams,
 ): Decimal {
-  const STEPS = 200;
-  const delta = amount.div(STEPS);
-  let total = new Decimal(0);
-  for (let i = 0; i < STEPS; i++) {
-    total = total.plus(
-      getPrice(currentSupply.minus(delta.mul(i + 1)), p).mul(delta)
-    );
-  }
-  return total;
+	const STEPS = 200;
+	const delta = amount.div(STEPS);
+	let total = new Decimal(0);
+	for (let i = 0; i < STEPS; i++) {
+		total = total.plus(
+			getPrice(currentSupply.minus(delta.mul(i + 1)), p).mul(delta),
+		);
+	}
+	return total;
 }
 
 export function getSlippage(orderSize: Decimal, liquidity: Decimal): number {
-  const ratio = orderSize.div(liquidity).toNumber();
-  return Math.min(0.15, Math.pow(ratio, 1.5) * 0.1);
+	const ratio = orderSize.div(liquidity).toNumber();
+	return Math.min(0.15, Math.pow(ratio, 1.5) * 0.1);
 }
 
 export function applySlippage(cost: Decimal, slippage: number): Decimal {
-  return cost.mul(new Decimal(1).plus(slippage));
+	return cost.mul(new Decimal(1).plus(slippage));
 }
 ```
 
@@ -318,29 +324,30 @@ export function applySlippage(cost: Decimal, slippage: number): Decimal {
 ## API Endpoints — V1
 
 > **All endpoints:**
+>
 > - Return JSON
 > - Errors return `{ error: string, code: string }`
 > - All Decimal values serialised as `string` (never `number`) to avoid JS float precision loss
 > - Auth "Required" means a valid Supabase JWT in the `Authorization: Bearer <token>` header
 
-| Method | Endpoint | Auth | Purpose | Request | Response | Rate Limit |
-|---|---|---|---|---|---|---|
-| `POST` | `/api/auth/signup` | Public | Create player, credit 1000 BC | `{ username, email, password }` | `{ player, session }` | 5/min |
-| `POST` | `/api/auth/login` | Public | Supabase sign in | `{ email, password }` | `{ session }` | 10/min |
-| `GET` | `/api/cards` | Public | List all cards with live prices | `?filter&sort&page` | `{ cards[], total }` | 60/min |
-| `GET` | `/api/cards/:id` | Public | Single card full detail + current price | — | `{ card, currentPrice }` | 60/min |
-| `GET` | `/api/cards/:id/history` | Public | Price history points for chart | `?range=1D\|7D\|30D` | `{ points[] }` | 60/min |
-| `GET` | `/api/cards/:id/trades` | Public | Trade history for a card | `?page&limit` | `{ trades[], total }` | 60/min |
-| `GET` | `/api/trade/preview` | Required | Compute cost preview — no side effects | `?cardId&amount&type` | `{ cost, newPrice, slippage }` | 120/min |
-| `POST` | `/api/trade/buy` | Required | Atomic buy — debit BC, add holding | `{ cardId, amount }` | `{ trade, newBalance, newPrice }` | 10/min |
-| `POST` | `/api/trade/sell` | Required | Atomic sell — credit BC, reduce holding | `{ cardId, amount }` | `{ trade, newBalance, newPrice }` | 10/min |
-| `POST` | `/api/rescue` | Required | Grant 50 BC rescue if balance = 0 | — | `{ newBalance, rescueCount }` | 1/season |
-| `GET` | `/api/leaderboard` | Required | Top 100 players + caller's own rank | — | `{ top100[], myRank }` | 30/min |
-| `GET` | `/api/player/:username` | Public | Player public profile + holdings | — | `{ player, holdings[] }` | 60/min |
-| `GET` | `/api/portfolio` | Required | Authenticated player's full portfolio | — | `{ holdings[], totalValue }` | 60/min |
-| `GET` | `/api/portfolio/history` | Required | Portfolio value over time | `?range=7D\|30D\|all` | `{ points[] }` | 30/min |
-| `GET` | `/api/search` | Public | Full-text search cards and players | `?q` | `{ cards[], players[] }` | 60/min |
-| `GET` | `/api/health` | Public | System health check | — | `{ db, redis, realtime }` | Unlimited |
+| Method | Endpoint                 | Auth     | Purpose                                 | Request                         | Response                          | Rate Limit |
+| ------ | ------------------------ | -------- | --------------------------------------- | ------------------------------- | --------------------------------- | ---------- |
+| `POST` | `/api/auth/signup`       | Public   | Create player, credit 1000 BC           | `{ username, email, password }` | `{ player, session }`             | 5/min      |
+| `POST` | `/api/auth/login`        | Public   | Supabase sign in                        | `{ email, password }`           | `{ session }`                     | 10/min     |
+| `GET`  | `/api/cards`             | Public   | List all cards with live prices         | `?filter&sort&page`             | `{ cards[], total }`              | 60/min     |
+| `GET`  | `/api/cards/:id`         | Public   | Single card full detail + current price | —                               | `{ card, currentPrice }`          | 60/min     |
+| `GET`  | `/api/cards/:id/history` | Public   | Price history points for chart          | `?range=1D\|7D\|30D`            | `{ points[] }`                    | 60/min     |
+| `GET`  | `/api/cards/:id/trades`  | Public   | Trade history for a card                | `?page&limit`                   | `{ trades[], total }`             | 60/min     |
+| `GET`  | `/api/trade/preview`     | Required | Compute cost preview — no side effects  | `?cardId&amount&type`           | `{ cost, newPrice, slippage }`    | 120/min    |
+| `POST` | `/api/trade/buy`         | Required | Atomic buy — debit BC, add holding      | `{ cardId, amount }`            | `{ trade, newBalance, newPrice }` | 10/min     |
+| `POST` | `/api/trade/sell`        | Required | Atomic sell — credit BC, reduce holding | `{ cardId, amount }`            | `{ trade, newBalance, newPrice }` | 10/min     |
+| `POST` | `/api/rescue`            | Required | Grant 50 BC rescue if balance = 0       | —                               | `{ newBalance, rescueCount }`     | 1/season   |
+| `GET`  | `/api/leaderboard`       | Required | Top 100 players + caller's own rank     | —                               | `{ top100[], myRank }`            | 30/min     |
+| `GET`  | `/api/player/:username`  | Public   | Player public profile + holdings        | —                               | `{ player, holdings[] }`          | 60/min     |
+| `GET`  | `/api/portfolio`         | Required | Authenticated player's full portfolio   | —                               | `{ holdings[], totalValue }`      | 60/min     |
+| `GET`  | `/api/portfolio/history` | Required | Portfolio value over time               | `?range=7D\|30D\|all`           | `{ points[] }`                    | 30/min     |
+| `GET`  | `/api/search`            | Public   | Full-text search cards and players      | `?q`                            | `{ cards[], players[] }`          | 60/min     |
+| `GET`  | `/api/health`            | Public   | System health check                     | —                               | `{ db, redis, realtime }`         | Unlimited  |
 
 ---
 
@@ -482,60 +489,60 @@ Step 7.  Return 200
 
 ## Redis Data Structures
 
-| Key Pattern | Type | TTL | Purpose |
-|---|---|---|---|
-| `leaderboard` | Sorted Set | No expiry | `ZADD score=portfolioValue member=playerId`. `ZREVRANGE 0 99` for top 100. `ZREVRANK` for individual rank. |
-| `price:{cardId}` | String | 1 second | Latest price cache. Reduces DB reads during high-traffic bursts. |
-| `ratelimit:trade:{playerId}` | String (INCR) | 60 seconds | Trade rate limiter. INCR per trade. Auto-expires. |
-| `ratelimit:{route}:{playerId}` | String (INCR) | 60 seconds | Generic per-route rate limiter. |
-| `rescue:{playerId}:{seasonId}` | String | Season end timestamp | Season rescue lock. Set after rescue. Expires when season ends. |
-| `lb:snapshot:{date}` | Hash | 48 hours | Nightly portfolio snapshot per player. Used to compute 24h rank change badges. |
+| Key Pattern                    | Type          | TTL                  | Purpose                                                                                                    |
+| ------------------------------ | ------------- | -------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `leaderboard`                  | Sorted Set    | No expiry            | `ZADD score=portfolioValue member=playerId`. `ZREVRANGE 0 99` for top 100. `ZREVRANK` for individual rank. |
+| `price:{cardId}`               | String        | 1 second             | Latest price cache. Reduces DB reads during high-traffic bursts.                                           |
+| `ratelimit:trade:{playerId}`   | String (INCR) | 60 seconds           | Trade rate limiter. INCR per trade. Auto-expires.                                                          |
+| `ratelimit:{route}:{playerId}` | String (INCR) | 60 seconds           | Generic per-route rate limiter.                                                                            |
+| `rescue:{playerId}:{seasonId}` | String        | Season end timestamp | Season rescue lock. Set after rescue. Expires when season ends.                                            |
+| `lb:snapshot:{date}`           | Hash          | 48 hours             | Nightly portfolio snapshot per player. Used to compute 24h rank change badges.                             |
 
 ---
 
 ## Supabase Realtime Channels
 
-| Channel | Event Payload | Triggered When | Client Action |
-|---|---|---|---|
-| `card-prices` | `{ cardId, newPrice, change24h }` | After every trade | Flash price on marketplace card tile |
-| `trade-feed` | `{ username, cardName, type, amount, totalCost }` | After every trade | Prepend to dashboard live feed sidebar |
-| `leaderboard` | `{ top10: [{ rank, username, value }] }` | Every 5s via cron job | Re-render top 10 leaderboard rows |
-| `player-{playerId}` | `{ newBalance, tradeId?, rescueGranted? }` | After own trade or rescue | Update balance in header immediately |
+| Channel             | Event Payload                                     | Triggered When            | Client Action                          |
+| ------------------- | ------------------------------------------------- | ------------------------- | -------------------------------------- |
+| `card-prices`       | `{ cardId, newPrice, change24h }`                 | After every trade         | Flash price on marketplace card tile   |
+| `trade-feed`        | `{ username, cardName, type, amount, totalCost }` | After every trade         | Prepend to dashboard live feed sidebar |
+| `leaderboard`       | `{ top10: [{ rank, username, value }] }`          | Every 5s via cron job     | Re-render top 10 leaderboard rows      |
+| `player-{playerId}` | `{ newBalance, tradeId?, rescueGranted? }`        | After own trade or rescue | Update balance in header immediately   |
 
 ---
 
 ## Security Requirements
 
-| Requirement | Rule | How It's Enforced |
-|---|---|---|
-| Server-side pricing | Price is **NEVER** read from request body. Always recomputed from DB. | Code review gate — PR rejected if `req.body.price` appears |
-| Input validation | Every route has a Zod schema. Extra fields stripped. Missing required fields → 422. | `zod.strict()` on all request schemas |
-| Auth on sensitive routes | All `/api/trade/*` and `/api/rescue` require valid Supabase JWT. | Middleware wrapping those route groups |
-| Rate limiting | Redis INCR per user per route. Trade: 10/min. Signup: 5/min. Preview: 120/min. | Redis check runs before any business logic |
-| Atomic transactions | Every trade and rescue uses Prisma `$transaction()` with `SELECT FOR UPDATE`. | No trade logic outside of `$transaction()` |
-| Row Level Security | Supabase RLS: players can only read/write their own rows. | RLS policies enabled on all tables in Supabase dashboard |
-| No negative balance | Balance check (step 4f) inside transaction before any UPDATE. | Hard guard — not optional |
-| Rescue abuse prevention | Redis key + DB `RescueLog` both checked before granting. | Two independent checks — Redis can expire, DB cannot |
-| Optimistic locking | `Card.version` incremented per trade. Concurrent conflicts → 409. | `version` check in UPDATE WHERE clause |
-| No SQL injection | Prisma parameterises all queries. No raw SQL with user input. | ESLint rule banning `$queryRawUnsafe` |
+| Requirement              | Rule                                                                                | How It's Enforced                                          |
+| ------------------------ | ----------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Server-side pricing      | Price is **NEVER** read from request body. Always recomputed from DB.               | Code review gate — PR rejected if `req.body.price` appears |
+| Input validation         | Every route has a Zod schema. Extra fields stripped. Missing required fields → 422. | `zod.strict()` on all request schemas                      |
+| Auth on sensitive routes | All `/api/trade/*` and `/api/rescue` require valid Supabase JWT.                    | Middleware wrapping those route groups                     |
+| Rate limiting            | Redis INCR per user per route. Trade: 10/min. Signup: 5/min. Preview: 120/min.      | Redis check runs before any business logic                 |
+| Atomic transactions      | Every trade and rescue uses Prisma `$transaction()` with `SELECT FOR UPDATE`.       | No trade logic outside of `$transaction()`                 |
+| Row Level Security       | Supabase RLS: players can only read/write their own rows.                           | RLS policies enabled on all tables in Supabase dashboard   |
+| No negative balance      | Balance check (step 4f) inside transaction before any UPDATE.                       | Hard guard — not optional                                  |
+| Rescue abuse prevention  | Redis key + DB `RescueLog` both checked before granting.                            | Two independent checks — Redis can expire, DB cannot       |
+| Optimistic locking       | `Card.version` incremented per trade. Concurrent conflicts → 409.                   | `version` check in UPDATE WHERE clause                     |
+| No SQL injection         | Prisma parameterises all queries. No raw SQL with user input.                       | ESLint rule banning `$queryRawUnsafe`                      |
 
 ---
 
 ## API Error Codes
 
-| HTTP | Code | Meaning | What Client Should Do |
-|---|---|---|---|
-| `400` | `INVALID_AMOUNT` | Amount ≤ 0, non-numeric, or unsafe | Show inline form error |
-| `400` | `INSUFFICIENT_BALANCE` | Player balance < totalCost | Show how much more BC is needed |
-| `400` | `INSUFFICIENT_HOLDINGS` | Sell amount > current holdings | Show max sellable quantity |
-| `400` | `RESCUE_NOT_ELIGIBLE` | Balance > 0, rescue not available | Hide rescue button |
-| `400` | `ALREADY_RESCUED` | Already rescued this season | Show season rescue limit message |
-| `401` | `UNAUTHENTICATED` | Missing or expired JWT | Redirect to `/login` |
-| `404` | `CARD_NOT_FOUND` | cardId does not exist | Redirect to `/marketplace` |
-| `409` | `CONCURRENT_CONFLICT` | Optimistic lock failed — another trade just hit the same card | Retry with exponential backoff (max 3×) |
-| `422` | `VALIDATION_ERROR` | Zod schema failed — missing or wrong-type field | Show which fields failed |
-| `429` | `RATE_LIMIT_EXCEEDED` | Too many requests in the window | Show cooldown timer in UI |
-| `500` | `INTERNAL_ERROR` | Unexpected server error — logged to Sentry in V3 | Show generic error toast |
+| HTTP  | Code                    | Meaning                                                       | What Client Should Do                   |
+| ----- | ----------------------- | ------------------------------------------------------------- | --------------------------------------- |
+| `400` | `INVALID_AMOUNT`        | Amount ≤ 0, non-numeric, or unsafe                            | Show inline form error                  |
+| `400` | `INSUFFICIENT_BALANCE`  | Player balance < totalCost                                    | Show how much more BC is needed         |
+| `400` | `INSUFFICIENT_HOLDINGS` | Sell amount > current holdings                                | Show max sellable quantity              |
+| `400` | `RESCUE_NOT_ELIGIBLE`   | Balance > 0, rescue not available                             | Hide rescue button                      |
+| `400` | `ALREADY_RESCUED`       | Already rescued this season                                   | Show season rescue limit message        |
+| `401` | `UNAUTHENTICATED`       | Missing or expired JWT                                        | Redirect to `/login`                    |
+| `404` | `CARD_NOT_FOUND`        | cardId does not exist                                         | Redirect to `/marketplace`              |
+| `409` | `CONCURRENT_CONFLICT`   | Optimistic lock failed — another trade just hit the same card | Retry with exponential backoff (max 3×) |
+| `422` | `VALIDATION_ERROR`      | Zod schema failed — missing or wrong-type field               | Show which fields failed                |
+| `429` | `RATE_LIMIT_EXCEEDED`   | Too many requests in the window                               | Show cooldown timer in UI               |
+| `500` | `INTERNAL_ERROR`        | Unexpected server error — logged to Sentry in V3              | Show generic error toast                |
 
 ---
 
@@ -567,34 +574,34 @@ Step 7.  Return 200
 
 ### Automated Test Suite
 
-| Test | Expected | Type |
-|---|---|---|
-| `getPrice(supply=0)` returns value within 1% of basePrice | Pass | Unit |
-| `getBuyCost(0, 1000)` ≈ 1000 × `getBuyCost(0, 1)` ±0.1% | Pass | Unit |
-| `getSellReturn` always < `getBuyCost` for same inputs | Pass | Unit |
-| `getSlippage` caps at 0.15 for very large orders | 0.15 | Unit |
-| Player balance debited correctly after buy | balance decreases by totalCost | Integration |
-| Player balance credited correctly after sell | balance increases | Integration |
-| 2 simultaneous buys on same card | 1 succeeds, 1 returns 409 | Integration |
-| Buy when balance < totalCost | Returns 400 INSUFFICIENT_BALANCE | Integration |
-| 11 trades in 60s from same player | 11th returns 429 | Integration |
-| Sell all units of a card | Holding row deleted from DB | Integration |
-| Every trade creates exactly 1 BalanceLedger row | Correct delta sign | Integration |
-| Rescue with balance = 0 | 50 BC credited, RescueLog row created | Integration |
-| Rescue with balance = 10 | Returns 400 RESCUE_NOT_ELIGIBLE | Integration |
-| Rescue twice same season | Returns 400 ALREADY_RESCUED | Integration |
-| Redis leaderboard ZSCORE updated after trade | Reflects new portfolio value | Integration |
-| Supabase Realtime event received after trade | Event arrives within 1 second | Integration |
+| Test                                                      | Expected                              | Type        |
+| --------------------------------------------------------- | ------------------------------------- | ----------- |
+| `getPrice(supply=0)` returns value within 1% of basePrice | Pass                                  | Unit        |
+| `getBuyCost(0, 1000)` ≈ 1000 × `getBuyCost(0, 1)` ±0.1%   | Pass                                  | Unit        |
+| `getSellReturn` always < `getBuyCost` for same inputs     | Pass                                  | Unit        |
+| `getSlippage` caps at 0.15 for very large orders          | 0.15                                  | Unit        |
+| Player balance debited correctly after buy                | balance decreases by totalCost        | Integration |
+| Player balance credited correctly after sell              | balance increases                     | Integration |
+| 2 simultaneous buys on same card                          | 1 succeeds, 1 returns 409             | Integration |
+| Buy when balance < totalCost                              | Returns 400 INSUFFICIENT_BALANCE      | Integration |
+| 11 trades in 60s from same player                         | 11th returns 429                      | Integration |
+| Sell all units of a card                                  | Holding row deleted from DB           | Integration |
+| Every trade creates exactly 1 BalanceLedger row           | Correct delta sign                    | Integration |
+| Rescue with balance = 0                                   | 50 BC credited, RescueLog row created | Integration |
+| Rescue with balance = 10                                  | Returns 400 RESCUE_NOT_ELIGIBLE       | Integration |
+| Rescue twice same season                                  | Returns 400 ALREADY_RESCUED           | Integration |
+| Redis leaderboard ZSCORE updated after trade              | Reflects new portfolio value          | Integration |
+| Supabase Realtime event received after trade              | Event arrives within 1 second         | Integration |
 
 ### Performance Targets
 
-| Endpoint | Target (p99) |
-|---|---|
-| `POST /api/trade/buy` | < 300ms |
-| `GET /api/cards` | < 100ms (Redis price cache) |
-| `GET /api/leaderboard` | < 50ms (pure Redis read) |
-| `GET /api/trade/preview` | < 50ms (no DB write) |
-| `POST /api/rescue` | < 200ms |
+| Endpoint                 | Target (p99)                |
+| ------------------------ | --------------------------- |
+| `POST /api/trade/buy`    | < 300ms                     |
+| `GET /api/cards`         | < 100ms (Redis price cache) |
+| `GET /api/leaderboard`   | < 50ms (pure Redis read)    |
+| `GET /api/trade/preview` | < 50ms (no DB write)        |
+| `POST /api/rescue`       | < 200ms                     |
 
 ### Infrastructure Checklist
 
@@ -608,4 +615,4 @@ Step 7.  Return 200
 
 ---
 
-*Backend V1 PRD · 16 endpoints · 6 DB models · 4 Realtime channels · Full atomic trade + rescue flows · 16 test cases*
+_Backend V1 PRD · 16 endpoints · 6 DB models · 4 Realtime channels · Full atomic trade + rescue flows · 16 test cases_
