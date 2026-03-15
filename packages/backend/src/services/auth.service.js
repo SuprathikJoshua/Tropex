@@ -50,10 +50,15 @@ export const registerService = async ({
 	} catch (error) {
 		throw new ApiError(500, "Failed to create user in database");
 	}
+	const { data: session, error: signInError } =
+		await supabase.auth.signInWithPassword({ email, password });
+	if (signInError) {
+		throw new ApiError(500, "Failed to sign in user");
+	}
 	const user = {
 		id: supabaseUserId,
 		username,
 		fullname,
 	};
-	return user;
+	return { user, session };
 };

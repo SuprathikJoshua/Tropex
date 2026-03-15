@@ -10,8 +10,15 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 	if (!username || !email || !password || !fullname) {
 		throw new ApiError(400, " All fields are required");
 	}
-	const user = await registerService({ username, email, password, fullname });
+	const { user, session } = await registerService({
+		username,
+		email,
+		password,
+		fullname,
+	});
 	res
 		.status(201)
-		.json(new ApiResponse(201, user, "User registered successfully"));
+		.json(
+			new ApiResponse(201, { user, session }, "User registered successfully"),
+		);
 });
