@@ -1,4 +1,5 @@
 import {
+	getMeService,
 	loginService,
 	refreshService,
 	registerService,
@@ -130,4 +131,15 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
 	return res
 		.status(200)
 		.json(new ApiResponse(200, null, "Token refreshed successfully"));
+});
+
+export const getMe = asyncHandler(async (req: Request, res: Response) => {
+	const userId = req.userId;
+	if (!userId) {
+		throw new ApiError(401, "Unauthorized request");
+	}
+	const user = await getMeService(userId);
+	res
+		.status(200)
+		.json(new ApiResponse(200, user, "User retrieved successfully"));
 });

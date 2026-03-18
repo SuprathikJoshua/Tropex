@@ -155,3 +155,14 @@ export const refreshService = async (token: string) => {
 
 	return { session: data.session };
 };
+
+export const getMeService = async (userId: string) => {
+	const user = await prisma.user.findUnique({
+		where: { id: userId },
+		include: { wallet: true },
+	});
+	if (!user) {
+		throw new ApiError(404, "User not found");
+	}
+	return user;
+};
