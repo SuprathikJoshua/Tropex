@@ -1,4 +1,8 @@
-import { loginService, registerService } from "../services/auth.service";
+import {
+	loginService,
+	refreshService,
+	registerService,
+} from "../services/auth.service";
 import type { User } from "../types/auth.type";
 import ApiError from "../utils/ApiError";
 import ApiResponse from "../utils/ApiResponse";
@@ -80,7 +84,13 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 			new ApiResponse(200, { user, session }, "User logged in successfully"),
 		);
 });
-
+/**
+ * Logout a user
+ * @route POST /api/auth/logout
+ * @access Public
+ * @returns {Object} 200 - User logged out successfully
+ * @throws {ApiError} 401 - Unauthorized
+ */
 export const logout = asyncHandler(async (req: Request, res: Response) => {
 	res.clearCookie("access_token");
 	res.clearCookie("refresh_token");
@@ -88,4 +98,36 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 	return res
 		.status(200)
 		.json(new ApiResponse(200, null, "Logged out successfully"));
+});
+
+/**
+ * Refresh token
+ * @route POST /api/auth/refresh
+ * @access Public
+ * @returns {Object} 200 - Token refreshed successfully
+ *
+ */
+export const refresh = asyncHandler(async (req: Request, res: Response) => {
+	const token = req.cookies?.refresh_token;
+	if (!token) {
+		throw new ApiError(401, "Unauthorized request");
+	}
+
+	const { session } = await refreshService(token);
+	res.cookie("access_token", session.access_token, {
+		httpOnly: true,
+		secure: process.env.NODE_ENV === "production",
+		sameSite: "strict",
+		maxAge: 60 * 60 * 1000,
+	});
+
+	res.cookie("refresh_token", session.refresh_token, {
+		httpOnly: true,
+		secure: process.env.NODE_ENV === "production",
+		sameSite: "strict",
+		maxAge: 60 * 60 * 24 * 7 * 1000,
+	});
+	return res
+		.status(200)
+		.json(new ApiResponse(200, null, "Token refreshed successfully"));
 });

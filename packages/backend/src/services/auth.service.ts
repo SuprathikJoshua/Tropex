@@ -84,6 +84,13 @@ export const registerService = async ({
 	return { user, session: session.session };
 };
 
+/**
+ * Login a user
+ * @param param0 - The email and password of the user
+ * @returns {Object} The user and their session
+ * @throws {ApiError} 400 - Invalid email or password
+ * @throws {ApiError} 500 - Failed to sign in user
+ */
 export const loginService = async ({
 	identifier,
 	password,
@@ -135,4 +142,16 @@ export const loginService = async ({
 	}
 
 	return { user, session: signInData.session };
+};
+
+export const refreshService = async (token: string) => {
+	const { data, error } = await supabase.auth.refreshSession({
+		refresh_token: token,
+	});
+
+	if (error || !data.session) {
+		throw new ApiError(401, "Invalid or expired refresh token");
+	}
+
+	return { session: data.session };
 };
