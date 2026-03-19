@@ -1,26 +1,39 @@
-import axios from "axios";
+import axios, { AxiosError, AxiosInstance } from "axios";
 
-const api = axios.create({
-	baseURL: process.env.BACKEND_URL || "http://localhost:8000/api/v1",
+const API_URL = process.env.BACKEND_URL || "http://localhost:8000/api/v1";
+console.log(API_URL);
+
+const apiClient: AxiosInstance = axios.create({
+	baseURL: API_URL,
 	withCredentials: true,
+	timeout: 10000,
 });
 
-api.interceptors.response.use(
+// Response interceptor for handling 401 and token refresh
+apiClient.interceptors.response.use(
 	(response) => response,
-	async (error) => {
-		const original = error.config;
+	async (error: AxiosError) => {
+		const originalRequest = error.config as any;
 
-		if (error.response?.status === 401 && !original._retry) {
-			original._retry = true;
+		// If 401 and not already retried, attempt token refresh
+		if (error.response?.status === 401 && !originalRequest._retry) {
+			originalRequest._retry = true;
+
+			try {
+				// Attempt to refresh the token
+				await apiClient.post("/auth/refresh");
+
+				// Retry the original request
+				return apiClient(originalRequest);
+			} catch (refreshError) {
+				// Refresh failed, redirect to login
+				window.location.href = "/login";
+				return Promise.reject(refreshError);
+			}
 		}
-		try {
-			await api.post("/auth/refresh");
-			return api(original);
-		} catch (error) {
-			window.location.href = "/login";
-		}
+
 		return Promise.reject(error);
 	},
 );
 
-export default api;
+export default apiClient;

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,21 +14,8 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { registerSchema, type RegisterFormData } from "@/lib/validations";
 import apiClient from "@/lib/api";
-
-const registerSchema = z
-	.object({
-		email: z.string().email("Invalid email address"),
-		password: z.string().min(8, "Password must be at least 8 characters"),
-		confirmPassword: z.string(),
-		username: z.string().min(3, "Username must be at least 3 characters"),
-	})
-	.refine((data) => data.password === data.confirmPassword, {
-		message: "Passwords don't match",
-		path: ["confirmPassword"],
-	});
-
-type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
 	const router = useRouter();
@@ -50,6 +36,7 @@ export default function RegisterPage() {
 
 		try {
 			const response = await apiClient.post("/auth/register", {
+				fullname: data.fullname,
 				email: data.email,
 				password: data.password,
 				username: data.username,
@@ -81,6 +68,23 @@ export default function RegisterPage() {
 							{error}
 						</div>
 					)}
+
+					<div className="space-y-2">
+						<label htmlFor="fullname" className="text-sm font-medium">
+							Full Name
+						</label>
+						<Input
+							id="fullname"
+							placeholder="Enter full name"
+							{...register("fullname")}
+							className="bg-input border-border"
+						/>
+						{errors.fullname && (
+							<p className="text-destructive text-sm">
+								{errors.fullname.message}
+							</p>
+						)}
+					</div>
 
 					<div className="space-y-2">
 						<label htmlFor="username" className="text-sm font-medium">
