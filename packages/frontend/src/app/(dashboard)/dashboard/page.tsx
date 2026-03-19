@@ -47,7 +47,7 @@ export default function DashboardPage() {
 	const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
 	const [topMovers, setTopMovers] = useState<TradeData[]>([]);
 	const [quickBuys, setQuickBuys] = useState<TradeData[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
+	const [isLoading, setIsLoading] = useState(false);
 	const [activeNav, setActiveNav] = useState("dashboard");
 
 	useEffect(() => {
@@ -55,26 +55,21 @@ export default function DashboardPage() {
 			try {
 				const userResponse = await apiClient.get("/auth/me");
 				setUser(userResponse.data);
-
 				// Fetch chart data (7-day portfolio value history)
-				const chartResponse = await apiClient.get("/portfolio/chart-data");
-				setChartData(chartResponse.data);
-
+				// const chartResponse = await apiClient.get("/portfolio/chart-data");
+				// setChartData(chartResponse.data);
 				// Fetch top movers
-				const moversResponse = await apiClient.get("/market/top-movers");
-				setTopMovers(moversResponse.data);
-
+				// const moversResponse = await apiClient.get("/market/top-movers");
+				// setTopMovers(moversResponse.data);
 				// Fetch quick buy options
-				const quickBuyResponse = await apiClient.get("/market/quick-buys");
-				setQuickBuys(quickBuyResponse.data);
-
+				// const quickBuyResponse = await apiClient.get("/market/quick-buys");
+				// setQuickBuys(quickBuyResponse.data);
 				setIsLoading(false);
 			} catch (err) {
 				console.error("Failed to load dashboard data:", err);
 				router.push("/login");
 			}
 		};
-
 		loadData();
 	}, [router]);
 
@@ -97,6 +92,7 @@ export default function DashboardPage() {
 			console.error("Buy failed:", err);
 		}
 	};
+	console.log(user);
 
 	if (isLoading || !user) {
 		return (
