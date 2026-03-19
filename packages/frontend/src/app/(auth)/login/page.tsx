@@ -36,7 +36,7 @@ export default function LoginPage() {
 
 		try {
 			const response = await apiClient.post("/auth/login", {
-				email: data.email,
+				identifier: data.identifier,
 				password: data.password,
 			});
 
@@ -68,18 +68,20 @@ export default function LoginPage() {
 					)}
 
 					<div className="space-y-2">
-						<label htmlFor="email" className="text-sm font-medium">
-							Email
+						<label htmlFor="identifier" className="text-sm font-medium">
+							Email or Username
 						</label>
 						<Input
-							id="email"
-							type="email"
-							placeholder="Enter email"
-							{...register("email")}
+							id="identifier"
+							type="text"
+							placeholder="Enter email or username"
+							{...register("identifier")}
 							className="bg-input border-border"
 						/>
-						{errors.email && (
-							<p className="text-destructive text-sm">{errors.email.message}</p>
+						{errors.identifier && (
+							<p className="text-destructive text-sm">
+								{errors.identifier.message}
+							</p>
 						)}
 					</div>
 

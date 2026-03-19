@@ -6,7 +6,7 @@ console.log(API_URL);
 const apiClient: AxiosInstance = axios.create({
 	baseURL: API_URL,
 	withCredentials: true,
-	timeout: 10000,
+	// timeout: 10000,
 });
 
 // Response interceptor for handling 401 and token refresh
