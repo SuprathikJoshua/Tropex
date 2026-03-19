@@ -45,7 +45,7 @@ export const registerService = async ({
 		email_confirm: true,
 	});
 	if (error) {
-		throw new ApiError(500, "Failed to create supabase user");
+		throw new ApiError(500, error.message);
 	}
 
 	const supabaseUserId = data.user.id;
