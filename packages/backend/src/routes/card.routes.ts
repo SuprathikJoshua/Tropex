@@ -4,12 +4,11 @@ import {
 	getCardById,
 	getCardHistory,
 } from "../controllers/card.controller";
-import { verifyJWT } from "../middlewares/auth.middleware";
 
 const router = Router();
 
-router.get("/", verifyJWT, getAllCards);
-router.get("/:id", verifyJWT, getCardById);
-router.get("/:id/history", verifyJWT, getCardHistory);
+router.get("/", getAllCards);
+router.get("/:id", getCardById);
+router.get("/:id/history", getCardHistory);
 
 export default router;
