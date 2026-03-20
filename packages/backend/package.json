@@ -6,6 +6,9 @@
 	"scripts": {
 		"dev": "bun --watch run src/index.ts"
 	},
+	"prisma": {
+  	"seed": "bun --env-file=.env run prisma/seed.ts"
+	},
 	"devDependencies": {
 		"@types/bun": "latest",
 		"@types/pg": "^8.18.0",
