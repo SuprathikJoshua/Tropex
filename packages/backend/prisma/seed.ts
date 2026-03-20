@@ -87,7 +87,7 @@ async function main() {
 
 		for (let i = 0; i < 100; i++) {
 			// Random date in last 30 days
-			const daysAgo = Math.random() * 30;
+			const daysAgo = (i / 100) * 30;
 			const createdAt = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
 
 			// Random amount between 1 and 50
