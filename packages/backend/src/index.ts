@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes";
 import cardRoutes from "./routes/card.routes";
 import tradeRoutes from "./routes/trade.routes";
+import walletRoutes from "./routes/wallet.routes";
 const app = express();
 
 app.use(express.json());
@@ -24,6 +25,7 @@ app.get("/api/v1/health", (req, res) => {
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/cards", cardRoutes);
 app.use("/api/v1/trade", tradeRoutes);
+app.use("/api/v1/wallet", walletRoutes);
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
