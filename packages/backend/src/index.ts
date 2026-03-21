@@ -4,6 +4,7 @@ import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.routes";
 import cardRoutes from "./routes/card.routes";
+import tradeRoutes from "./routes/trade.routes";
 const app = express();
 
 app.use(express.json());
@@ -22,6 +23,7 @@ app.get("/api/v1/health", (req, res) => {
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/cards", cardRoutes);
+app.use("/api/v1/trade", tradeRoutes);
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
