@@ -2,7 +2,11 @@ import asyncHandler from "../utils/asyncHandlers";
 import ApiError from "../utils/ApiError";
 import ApiResponse from "../utils/ApiResponse";
 import type { Request, Response } from "express";
-import { buyCardService, previewTradeService } from "../services/trade.service";
+import {
+	buyCardService,
+	previewTradeService,
+	sellCardService,
+} from "../services/trade.service";
 
 export const previewTrade = asyncHandler(
 	async (req: Request, res: Response) => {
@@ -46,4 +50,17 @@ export const buyCard = asyncHandler(async (req: Request, res: Response) => {
 
 export const sellCard = asyncHandler(async (req: Request, res: Response) => {
 	const { cardId, amount } = req.body;
+	const userId = req.userId;
+
+	if (!cardId || !amount) {
+		throw new ApiError(400, "CardId and amount are required");
+	}
+
+	if (amount <= 0) {
+		throw new ApiError(400, "Amount must be greater than 0");
+	}
+
+	const result = await sellCardService(userId, cardId, amount);
+
+	res.status(200).json(new ApiResponse(200, result, "Card sold successfully"));
 });
