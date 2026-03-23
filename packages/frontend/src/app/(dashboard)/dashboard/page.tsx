@@ -21,54 +21,40 @@ import {
 } from "@/components/ui/card";
 import apiClient from "@/lib/api";
 
-interface User {
-	id: string;
-	username: string;
-	email: string;
-	balance: number;
-	portfolioValue: number;
-}
-
-interface TradeData {
-	symbol: string;
-	price: number;
-	change: number;
-	changePercent: number;
-}
-
-interface ChartDataPoint {
-	date: string;
-	value: number;
-}
-
 export default function DashboardPage() {
 	const router = useRouter();
-	const [user, setUser] = useState<User | null>(null);
-	const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
-	const [topMovers, setTopMovers] = useState<TradeData[]>([]);
-	const [quickBuys, setQuickBuys] = useState<TradeData[]>([]);
-	const [isLoading, setIsLoading] = useState(false);
+	const [user, setUser] = useState<any>(null);
+	const [portfolio, setPortfolio] = useState<any>(null);
+	const [cards, setCards] = useState<any[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
 	const [activeNav, setActiveNav] = useState("dashboard");
 
 	useEffect(() => {
 		const loadData = async () => {
 			try {
-				const userResponse = await apiClient.get("/auth/me");
-				setUser(userResponse.data);
-				// Fetch chart data (7-day portfolio value history)
-				// const chartResponse = await apiClient.get("/portfolio/chart-data");
-				// setChartData(chartResponse.data);
-				// Fetch top movers
-				// const moversResponse = await apiClient.get("/market/top-movers");
-				// setTopMovers(moversResponse.data);
-				// Fetch quick buy options
-				// const quickBuyResponse = await apiClient.get("/market/quick-buys");
-				// setQuickBuys(quickBuyResponse.data);
-				setIsLoading(false);
+				const userRes = await apiClient.get("/auth/me");
+				setUser(userRes.data.data);
 			} catch (err) {
-				console.error("Failed to load dashboard data:", err);
+				console.error("User fetch failed:", err);
 				router.push("/login");
+				return;
 			}
+
+			try {
+				const portfolioRes = await apiClient.get("/portfolio");
+				setPortfolio(portfolioRes.data.data);
+			} catch (err) {
+				console.error("Portfolio fetch failed:", err);
+			}
+
+			try {
+				const cardsRes = await apiClient.get("/cards");
+				setCards(cardsRes.data.data ?? []);
+			} catch (err) {
+				console.error("Cards fetch failed:", err);
+			}
+
+			setIsLoading(false);
 		};
 		loadData();
 	}, [router]);
@@ -82,260 +68,268 @@ export default function DashboardPage() {
 		}
 	};
 
-	const handleBuy = async (symbol: string) => {
+	const handleBuy = async (cardId: string) => {
 		try {
-			await apiClient.post("/trades/buy", { symbol, amount: 100 });
-			// Refresh data
-			const userResponse = await apiClient.get("/auth/me");
-			setUser(userResponse.data);
+			await apiClient.post("/trade/buy", { cardId, amount: 10 });
+			const portfolioRes = await apiClient.get("/portfolio");
+			setPortfolio(portfolioRes.data.data);
+			const userRes = await apiClient.get("/auth/me");
+			setUser(userRes.data.data.user);
 		} catch (err) {
 			console.error("Buy failed:", err);
 		}
 	};
-	console.log(user);
 
-	if (isLoading || !user) {
+	if (isLoading) {
 		return (
-			<div className="min-h-screen flex items-center justify-center bg-background">
-				<div className="text-muted-foreground">Loading dashboard...</div>
+			<div
+				className="min-h-screen flex items-center justify-center"
+				style={{ backgroundColor: "#0D0D0D" }}
+			>
+				<div style={{ color: "#666666" }}>Loading dashboard...</div>
 			</div>
 		);
 	}
 
+	if (!user) {
+		return null;
+	}
+
 	return (
-		<div className="min-h-screen bg-background">
+		<div className="min-h-screen" style={{ backgroundColor: "#0D0D0D" }}>
 			<div className="grid grid-cols-12 gap-4 p-6 h-screen overflow-hidden">
 				{/* Left Sidebar */}
-				<aside className="col-span-3 border-r border-border flex flex-col bg-card rounded-lg p-6">
+				<aside
+					className="col-span-3 flex flex-col rounded-lg p-6 border"
+					style={{ backgroundColor: "#141414", borderColor: "#2A2A2A" }}
+				>
+					{/* Logo */}
 					<div className="mb-8">
-						<h1 className="text-2xl font-bold text-accent mb-2">TROPEX</h1>
-						<p className="text-sm text-muted-foreground">Trading Game</p>
+						<h1 className="text-2xl font-bold" style={{ color: "#FFD600" }}>
+							TROPEX
+						</h1>
+						<p className="text-sm" style={{ color: "#666666" }}>
+							Trading Game
+						</p>
 					</div>
 
-					<div className="mb-8 pb-8 border-b border-border">
-						<div className="text-sm text-muted-foreground mb-2">
-							Portfolio Balance
+					{/* Balance */}
+					<div
+						className="mb-8 pb-8 border-b"
+						style={{ borderColor: "#2A2A2A" }}
+					>
+						<div className="text-sm mb-2" style={{ color: "#666666" }}>
+							Wallet Balance
 						</div>
-						<div className="text-3xl font-bold">
-							$
-							{user.balance?.toLocaleString("en-US", {
-								minimumFractionDigits: 2,
-								maximumFractionDigits: 2,
-							})}
+						<div
+							className="text-3xl font-bold font-mono"
+							style={{ color: "#FFD600" }}
+						>
+							{Number(user?.wallet?.balance).toFixed(2)} TC
 						</div>
 					</div>
 
+					{/* Nav */}
 					<nav className="space-y-2 flex-1">
-						<button
-							onClick={() => setActiveNav("dashboard")}
-							className={`w-full text-left px-4 py-2 rounded-md transition ${
-								activeNav === "dashboard"
-									? "bg-accent text-accent-foreground"
-									: "text-foreground hover:bg-input"
-							}`}
-						>
-							Dashboard
-						</button>
-						<button
-							onClick={() => setActiveNav("portfolio")}
-							className={`w-full text-left px-4 py-2 rounded-md transition ${
-								activeNav === "portfolio"
-									? "bg-accent text-accent-foreground"
-									: "text-foreground hover:bg-input"
-							}`}
-						>
-							Portfolio
-						</button>
-						<button
-							onClick={() => setActiveNav("market")}
-							className={`w-full text-left px-4 py-2 rounded-md transition ${
-								activeNav === "market"
-									? "bg-accent text-accent-foreground"
-									: "text-foreground hover:bg-input"
-							}`}
-						>
-							Market
-						</button>
+						{[
+							{ id: "dashboard", label: "Dashboard" },
+							{ id: "marketplace", label: "Marketplace" },
+							{ id: "leaderboard", label: "Leaderboard" },
+							{ id: "wallet", label: "Wallet" },
+							{ id: "profile", label: "Profile" },
+						].map((item) => (
+							<button
+								key={item.id}
+								onClick={() => setActiveNav(item.id)}
+								className="w-full text-left px-4 py-2 rounded-md transition"
+								style={{
+									backgroundColor:
+										activeNav === item.id ? "#FFD600" : "transparent",
+									color: activeNav === item.id ? "#0D0D0D" : "#E8E8E8",
+									borderLeft:
+										activeNav === item.id
+											? "3px solid #FFD600"
+											: "3px solid transparent",
+								}}
+							>
+								{item.label}
+							</button>
+						))}
 					</nav>
 
+					{/* Logout */}
 					<Button
 						onClick={handleLogout}
 						variant="outline"
-						className="w-full border-border text-destructive hover:bg-destructive/10"
+						className="w-full"
+						style={{ borderColor: "#2A2A2A", color: "#FF4D4D" }}
 					>
 						Logout
 					</Button>
 				</aside>
 
 				{/* Main Content */}
-				<main className="col-span-6 overflow-y-auto pr-4">
-					<div className="space-y-6">
-						{/* Portfolio Value */}
-						<Card className="border-border bg-card">
-							<CardHeader>
-								<CardTitle>Portfolio Value</CardTitle>
-								<CardDescription>7-day performance</CardDescription>
-							</CardHeader>
-							<CardContent>
-								<div className="mb-4">
-									<div className="text-4xl font-bold mb-2">
-										$
-										{user.portfolioValue?.toLocaleString("en-US", {
-											minimumFractionDigits: 2,
-											maximumFractionDigits: 2,
-										})}
-									</div>
-									<div className="text-success text-sm font-medium">
-										+$
-										{(user.portfolioValue - user.balance)?.toLocaleString(
-											"en-US",
-											{ minimumFractionDigits: 2 },
-										)}{" "}
-										(Profit)
-									</div>
+				<main className="col-span-6 overflow-y-auto pr-4 space-y-6">
+					{/* Portfolio Value */}
+					<Card style={{ backgroundColor: "#141414", borderColor: "#2A2A2A" }}>
+						<CardHeader>
+							<CardTitle style={{ color: "#E8E8E8" }}>
+								Portfolio Value
+							</CardTitle>
+							<CardDescription style={{ color: "#666666" }}>
+								Your current holdings
+							</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<div className="mb-4">
+								<div
+									className="text-4xl font-bold font-mono mb-2"
+									style={{ color: "#E8E8E8" }}
+								>
+									{Number(portfolio?.portfolioValue ?? 0).toFixed(2)} TC
 								</div>
-								{chartData.length > 0 ? (
-									<ResponsiveContainer width="100%" height={300}>
-										<LineChart data={chartData}>
-											<CartesianGrid
-												strokeDasharray="3 3"
-												stroke="hsl(var(--border))"
-											/>
-											<XAxis
-												dataKey="date"
-												stroke="hsl(var(--muted-foreground))"
-											/>
-											<YAxis stroke="hsl(var(--muted-foreground))" />
-											<Tooltip
-												contentStyle={{
-													backgroundColor: "hsl(var(--card))",
-													border: "1px solid hsl(var(--border))",
-													borderRadius: "0.5rem",
-												}}
-												labelStyle={{ color: "hsl(var(--foreground))" }}
-											/>
-											<Line
-												type="monotone"
-												dataKey="value"
-												stroke="hsl(var(--accent))"
-												strokeWidth={2}
-												dot={false}
-											/>
-										</LineChart>
-									</ResponsiveContainer>
-								) : (
-									<div className="h-72 flex items-center justify-center text-muted-foreground">
-										No data available
-									</div>
-								)}
-							</CardContent>
-						</Card>
+								<div
+									className="text-sm font-medium"
+									style={{ color: "#00E87A" }}
+								>
+									{portfolio?.holdings?.length ?? 0} cards in portfolio
+								</div>
+							</div>
 
-						{/* Top Movers */}
-						<Card className="border-border bg-card">
-							<CardHeader>
-								<CardTitle>Top Movers</CardTitle>
-								<CardDescription>Most active today</CardDescription>
-							</CardHeader>
-							<CardContent>
-								<div className="grid grid-cols-1 gap-4">
-									{topMovers.slice(0, 3).map((mover) => (
-										<div
-											key={mover.symbol}
-											className="flex items-center justify-between p-4 bg-input rounded-lg border border-border"
-										>
-											<div>
-												<div className="font-bold text-foreground">
-													{mover.symbol}
-												</div>
-												<div className="text-sm text-muted-foreground">
-													$
-													{mover.price?.toLocaleString("en-US", {
-														minimumFractionDigits: 2,
-													})}
-												</div>
+							{/* Chart placeholder */}
+							<div
+								className="h-64 flex items-center justify-center rounded-lg"
+								style={{
+									backgroundColor: "#0D0D0D",
+									border: "1px solid #2A2A2A",
+								}}
+							>
+								<span style={{ color: "#666666" }}>
+									Portfolio chart coming soon
+								</span>
+							</div>
+						</CardContent>
+					</Card>
+
+					{/* Top Movers */}
+					<Card style={{ backgroundColor: "#141414", borderColor: "#2A2A2A" }}>
+						<CardHeader>
+							<CardTitle style={{ color: "#E8E8E8" }}>Top Movers</CardTitle>
+							<CardDescription style={{ color: "#666666" }}>
+								Most active cards today
+							</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<div className="space-y-3">
+								{cards.slice(0, 4).map((card) => (
+									<div
+										key={card.id}
+										className="flex items-center justify-between p-4 rounded-lg"
+										style={{
+											backgroundColor: "#0D0D0D",
+											border: "1px solid #2A2A2A",
+										}}
+									>
+										<div>
+											<div className="font-bold" style={{ color: "#E8E8E8" }}>
+												{card.name}
 											</div>
 											<div
-												className={`text-right font-bold ${mover.changePercent >= 0 ? "text-success" : "text-destructive"}`}
+												className="text-sm font-mono"
+												style={{ color: "#666666" }}
 											>
-												{mover.changePercent >= 0 ? "+" : ""}
-												{mover.changePercent?.toFixed(2)}%
+												{Number(card.currentPrice).toFixed(2)} TC
 											</div>
 										</div>
-									))}
-								</div>
-							</CardContent>
-						</Card>
-					</div>
+										<div
+											className="font-bold"
+											style={{
+												color:
+													Number(card.change24hPercent) >= 0
+														? "#00E87A"
+														: "#FF4D4D",
+											}}
+										>
+											{Number(card.change24hPercent) >= 0 ? "+" : ""}
+											{Number(card.change24hPercent).toFixed(2)}%
+										</div>
+									</div>
+								))}
+							</div>
+						</CardContent>
+					</Card>
 				</main>
 
-				{/* Right Sidebar - Quick Buy & Live Trades */}
-				<aside className="col-span-3 border-l border-border flex flex-col bg-card rounded-lg p-6 overflow-y-auto">
-					<h2 className="text-lg font-bold mb-6">Quick Buy</h2>
+				{/* Right Sidebar */}
+				<aside
+					className="col-span-3 flex flex-col rounded-lg p-6 border overflow-y-auto"
+					style={{ backgroundColor: "#141414", borderColor: "#2A2A2A" }}
+				>
+					{/* Quick Buy */}
+					<h2 className="text-lg font-bold mb-4" style={{ color: "#E8E8E8" }}>
+						Quick Buy
+					</h2>
 					<div className="space-y-3 mb-8">
-						{quickBuys.slice(0, 4).map((item) => (
+						{cards.slice(0, 4).map((card) => (
 							<div
-								key={item.symbol}
-								className="bg-input rounded-lg p-4 border border-border"
+								key={card.id}
+								className="rounded-lg p-4"
+								style={{
+									backgroundColor: "#0D0D0D",
+									border: "1px solid #2A2A2A",
+								}}
 							>
 								<div className="flex items-center justify-between mb-3">
 									<div>
-										<div className="font-bold text-foreground">
-											{item.symbol}
+										<div className="font-bold" style={{ color: "#E8E8E8" }}>
+											{card.name}
 										</div>
-										<div className="text-xs text-muted-foreground">
-											$
-											{item.price?.toLocaleString("en-US", {
-												minimumFractionDigits: 2,
-											})}
+										<div
+											className="text-xs font-mono"
+											style={{ color: "#666666" }}
+										>
+											{Number(card.currentPrice).toFixed(2)} TC
 										</div>
 									</div>
 									<div
-										className={`text-sm font-bold ${item.changePercent >= 0 ? "text-success" : "text-destructive"}`}
+										className="text-sm font-bold"
+										style={{
+											color:
+												Number(card.change24hPercent) >= 0
+													? "#00E87A"
+													: "#FF4D4D",
+										}}
 									>
-										{item.changePercent >= 0 ? "+" : ""}
-										{item.changePercent?.toFixed(2)}%
+										{Number(card.change24hPercent) >= 0 ? "+" : ""}
+										{Number(card.change24hPercent).toFixed(2)}%
 									</div>
 								</div>
 								<Button
-									onClick={() => handleBuy(item.symbol)}
+									onClick={() => handleBuy(card.id)}
 									size="sm"
-									className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+									className="w-full font-bold"
+									style={{ backgroundColor: "#FFD600", color: "#0D0D0D" }}
 								>
-									Buy
+									Buy 10 TC
 								</Button>
 							</div>
 						))}
 					</div>
 
-					<h2 className="text-lg font-bold mb-4">Live Trades</h2>
-					<div className="space-y-2 text-sm">
-						<div className="p-3 bg-input rounded border border-border">
-							<div className="flex justify-between mb-1">
-								<span className="text-muted-foreground">AAPL</span>
-								<span className="text-success">+2.5%</span>
-							</div>
-							<div className="text-xs text-muted-foreground">
-								Bought 10 shares
-							</div>
-						</div>
-						<div className="p-3 bg-input rounded border border-border">
-							<div className="flex justify-between mb-1">
-								<span className="text-muted-foreground">MSFT</span>
-								<span className="text-success">+1.8%</span>
-							</div>
-							<div className="text-xs text-muted-foreground">
-								Bought 5 shares
-							</div>
-						</div>
-						<div className="p-3 bg-input rounded border border-border">
-							<div className="flex justify-between mb-1">
-								<span className="text-muted-foreground">TSLA</span>
-								<span className="text-destructive">-0.9%</span>
-							</div>
-							<div className="text-xs text-muted-foreground">
-								Bought 2 shares
-							</div>
+					{/* Live Trades placeholder */}
+					<h2 className="text-lg font-bold mb-4" style={{ color: "#E8E8E8" }}>
+						Live Trades
+					</h2>
+					<div className="space-y-2">
+						<div
+							className="text-sm p-3 rounded"
+							style={{
+								backgroundColor: "#0D0D0D",
+								border: "1px solid #2A2A2A",
+								color: "#666666",
+							}}
+						>
+							Live trades coming soon
 						</div>
 					</div>
 				</aside>
