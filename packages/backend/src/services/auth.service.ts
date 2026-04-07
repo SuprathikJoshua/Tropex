@@ -127,7 +127,7 @@ export const loginService = async ({
 		});
 
 	if (signInError) {
-		throw new ApiError(400, "Invalid email or password");
+		throw new ApiError(400, signInError.message);
 	}
 
 	const userId = signInData.user.id;
