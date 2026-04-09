@@ -11,9 +11,9 @@ interface Card {
 	id: string;
 	name: string;
 	creatorUsername: string;
-	currentPrice: number;
-	change24hPercent: number;
-	volume24h: number;
+	currentPrice: string;
+	change24hPercent: string;
+	volume24h: string;
 }
 
 export default function MarketplacePage() {
@@ -56,20 +56,19 @@ export default function MarketplacePage() {
 
 		// Filter by tab
 		if (filterTab === "trending") {
-			filtered = filtered.filter((card) => card.volume24h > 0);
+			filtered = filtered.filter((card) => Number(card.volume24h) > 0);
 		}
 
-		// Sort
 		const sorted = [...filtered].sort((a, b) => {
 			switch (sortBy) {
 				case "price-high":
-					return b.currentPrice - a.currentPrice;
+					return Number(b.currentPrice) - Number(a.currentPrice);
 				case "price-low":
-					return a.currentPrice - b.currentPrice;
+					return Number(a.currentPrice) - Number(b.currentPrice);
 				case "volume":
-					return b.volume24h - a.volume24h;
+					return Number(b.volume24h) - Number(a.volume24h);
 				case "change":
-					return b.change24hPercent - a.change24hPercent;
+					return Number(b.change24hPercent) - Number(a.change24hPercent);
 				case "newest":
 				default:
 					return 0;
@@ -206,16 +205,18 @@ export default function MarketplacePage() {
 										className="px-2 py-1 rounded text-xs font-bold"
 										style={{
 											backgroundColor:
-												card.change24hPercent >= 0 ? "#00E87A" : "#FF4D4D",
+												Number(card.change24hPercent) >= 0
+													? "#00E87A"
+													: "#FF4D4D",
 											color: "#0D0D0D",
 										}}
 									>
-										{card.change24hPercent >= 0 ? "+" : ""}
+										{Number(card.change24hPercent) >= 0 ? "+" : ""}
 										{Number(card.change24hPercent).toFixed(2)}%
 									</div>
 								</div>
 								<p className="text-xs" style={{ color: "#666666" }}>
-									Vol: {card.volume24h.toLocaleString()} TC
+									Vol: {Number(card.volume24h).toLocaleString()} TC
 								</p>
 							</div>
 						</Link>
