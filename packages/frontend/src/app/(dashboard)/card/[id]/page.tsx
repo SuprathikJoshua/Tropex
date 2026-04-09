@@ -70,7 +70,7 @@ export default function CardDetailPage({
 						apiClient.get(`/cards/${cardId}/trades`),
 					]);
 
-				setCard(cardRes.data.data.card);
+				setCard(cardRes.data.data);
 
 				// Convert price strings to numbers for chart
 				const points = (historyRes.data.data.points ?? []).map((p: any) => ({
@@ -104,7 +104,7 @@ export default function CardDetailPage({
 			const response = await apiClient.get(
 				`/trade/preview?cardId=${cardId}&amount=${amount}&type=${tradeType}`,
 			);
-			const preview = response.data.data.preview;
+			const preview = response.data.data;
 			setEstimatedCost(Number(preview.totalCost));
 			setPreviewData(preview);
 		} catch (err) {
@@ -413,7 +413,7 @@ export default function CardDetailPage({
 												className="font-mono font-bold"
 												style={{ color: "#FFD600" }}
 											>
-												{trade.amount.toFixed(2)}
+												{Number(trade.amount).toFixed(2)}
 											</span>
 										</div>
 									</div>
