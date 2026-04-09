@@ -10,7 +10,6 @@ import apiClient from "@/lib/api";
 interface Card {
 	id: string;
 	name: string;
-	creatorUsername: string;
 	currentPrice: string;
 	change24hPercent: string;
 	volume24h: string;
@@ -191,9 +190,6 @@ export default function MarketplacePage() {
 								>
 									{card.name}
 								</h3>
-								<p className="text-sm mb-3" style={{ color: "#666666" }}>
-									{card.creatorUsername}
-								</p>
 								<div
 									className="font-mono text-lg font-bold mb-2"
 									style={{ color: "#FFD600" }}
