@@ -20,6 +20,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import apiClient from "@/lib/api";
+import { set } from "zod";
 
 export default function DashboardPage() {
 	const router = useRouter();
@@ -59,6 +60,10 @@ export default function DashboardPage() {
 		loadData();
 	}, [router]);
 
+	const navigateTo = (id: string) => {
+		setActiveNav(id);
+		router.push(id);
+	};
 	const handleLogout = async () => {
 		try {
 			await apiClient.post("/auth/logout");
@@ -140,7 +145,7 @@ export default function DashboardPage() {
 						].map((item) => (
 							<button
 								key={item.id}
-								onClick={() => setActiveNav(item.id)}
+								onClick={() => navigateTo(item.id)}
 								className="w-full text-left px-4 py-2 rounded-md transition"
 								style={{
 									backgroundColor:
