@@ -2,6 +2,7 @@ import {
 	getAllCardsService,
 	getCardByIdService,
 	getCardHistoryService,
+	getCardTradesService,
 } from "../services/card.service";
 import ApiError from "../utils/ApiError";
 import ApiResponse from "../utils/ApiResponse";
@@ -36,5 +37,15 @@ export const getCardHistory = asyncHandler(
 		return res
 			.status(200)
 			.json(new ApiResponse(200, card, "Card history fetched successfully"));
+	},
+);
+
+export const getCardTrades = asyncHandler(
+	async (req: Request, res: Response) => {
+		const { id } = req.params;
+		const trades = await getCardTradesService(id as string);
+		return res
+			.status(200)
+			.json(new ApiResponse(200, { trades }, "Trades fetched successfully"));
 	},
 );

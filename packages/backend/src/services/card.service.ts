@@ -119,3 +119,12 @@ export const getCardHistoryService = async (
 	// console.log("first trade:", trades[0]);
 	return points;
 };
+
+export const getCardTradesService = async (cardId: string) => {
+	const trades = await prisma.trade.findMany({
+		where: { cardId },
+		orderBy: { createdAt: "desc" },
+		take: 20,
+	});
+	return trades;
+};
