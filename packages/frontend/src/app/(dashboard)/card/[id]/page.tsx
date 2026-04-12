@@ -47,7 +47,7 @@ export default function CardDetailPage({
 	const [holdings, setHoldings] = useState(0);
 	const [isLoading, setIsLoading] = useState(true);
 	const [tradeType, setTradeType] = useState<"BUY" | "SELL">("BUY");
-	const [amount, setAmount] = useState("0.01");
+	const [amount, setAmount] = useState("1");
 	const [estimatedCost, setEstimatedCost] = useState(0);
 	const [showConfirmModal, setShowConfirmModal] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -281,7 +281,7 @@ export default function CardDetailPage({
 								/>
 								<button
 									onClick={() =>
-										setAmount((parseFloat(amount) + 0.01).toFixed(2))
+										setAmount((parseFloat(amount) + 0.1).toFixed(2))
 									}
 									style={{
 										backgroundColor: "#2A2A2A",
@@ -340,17 +340,19 @@ export default function CardDetailPage({
 						>
 							{Number(card.currentPrice).toFixed(2)} TC
 						</div>
-						<div
-							className="px-3 py-1 rounded text-sm font-bold inline-block mb-4"
-							style={{
-								backgroundColor:
-									Number(card.change24hPercent) >= 0 ? "#00E87A" : "#FF4D4D",
-								color: "#0D0D0D",
-							}}
-						>
-							{Number(card.change24hPercent) >= 0 ? "+" : ""}
-							{Number(card.change24hPercent).toFixed(2)}%
-						</div>
+						{card.change24hPercent && Number(card.change24hPercent) !== 0 && (
+							<div
+								className="px-3 py-1 rounded text-sm font-bold inline-block mb-4"
+								style={{
+									backgroundColor:
+										Number(card.change24hPercent) >= 0 ? "#00E87A" : "#FF4D4D",
+									color: "#0D0D0D",
+								}}
+							>
+								{Number(card.change24hPercent) >= 0 ? "+" : ""}
+								{Number(card.change24hPercent).toFixed(2)}%
+							</div>
+						)}
 						{holdings > 0 && (
 							<div
 								className="mt-6 pt-6 border-t"
@@ -378,8 +380,7 @@ export default function CardDetailPage({
 						style={{ backgroundColor: "#141414", border: "1px solid #2A2A2A" }}
 					>
 						<h2 style={{ color: "#E8E8E8" }} className="font-bold mb-4">
-							Trade Historydd previewData state at the top with your other state
-							declaration
+							Trade History
 						</h2>
 						<div className="space-y-2 max-h-96 overflow-y-auto">
 							{tradeHistory.length === 0 ? (
