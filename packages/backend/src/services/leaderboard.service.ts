@@ -3,6 +3,11 @@ import prisma from "../lib/prisma";
 
 export const getLeaderboardService = async (userId: string) => {
 	const top100 = await prisma.wallet.findMany({
+		where: {
+			user: {
+				username: { not: "tropexbank" },
+			},
+		},
 		orderBy: { balance: "desc" },
 		take: 100,
 		include: { user: true },
@@ -17,8 +22,13 @@ export const getLeaderboardService = async (userId: string) => {
 	}));
 
 	const allWallets = await prisma.wallet.findMany({
+		where: {
+			user: {
+				username: { not: "tropexbank" },
+			},
+		},
 		orderBy: { balance: "desc" },
-		include: { user: true },
+		select: { userId: true },
 	});
 
 	const myRank = allWallets.findIndex((wallet) => wallet.userId === userId) + 2;
