@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 // import { Analytics } from "@vercel/analytics/next";
-import "./globals.css";
+import "../../styles/globals.css";
 
 export const metadata: Metadata = {
 	title: "Tropex - Trading Game",
@@ -33,7 +33,10 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en" suppressHydrationWarning>
-			<body className="font-sans antialiased">
+			<body
+				className="font-sans antialiased"
+				style={{ backgroundColor: "#0D0D0D" }}
+			>
 				{children}
 				{/* <Analytics /> */}
 			</body>

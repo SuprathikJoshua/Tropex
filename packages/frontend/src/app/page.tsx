@@ -212,7 +212,7 @@ export default function Home() {
 						].map((item, idx) => (
 							<div key={idx} className="flex gap-6 items-start">
 								<div
-									className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center font-bold text-lg"
+									className="shrink-0 w-12 h-12 rounded-lg flex items-center justify-center font-bold text-lg"
 									style={{ backgroundColor: "#FFD600", color: "#0D0D0D" }}
 								>
 									{item.step}
