@@ -135,7 +135,7 @@ export default function CardDetailPage({
 				apiClient.get(`/cards/${cardId}`),
 				apiClient.get("/portfolio"),
 			]);
-			setCard(cardRes.data.data.card);
+			setCard(cardRes.data.data);
 			const holding = portfolioRes.data.data.holdings?.find(
 				(h: any) => h.cardId === cardId,
 			);
@@ -463,10 +463,9 @@ export default function CardDetailPage({
 									className="font-mono font-bold"
 									style={{ color: "#E8E8E8" }}
 								>
-									{(
-										Number(card.currentPrice) *
-										(1 + Math.random() * 0.1)
-									).toFixed(2)}{" "}
+									{previewData?.newPrice
+										? Number(previewData.newPrice).toFixed(2)
+										: "—"}{" "}
 									TC
 								</span>
 							</div>
