@@ -106,6 +106,15 @@ export const getCardHistoryService = async (
 		select: { supplyAfter: true, createdAt: true },
 	});
 
+	if (trades.length === 0) {
+		return [
+			{
+				price: getCurrentPrice(card),
+				timestamp: new Date(),
+			},
+		];
+	}
+
 	const points = trades.map((trade) => ({
 		price: getCurrentPrice({
 			basePrice: card.basePrice,
@@ -117,6 +126,10 @@ export const getCardHistoryService = async (
 	}));
 	// console.log("trades found:", trades.length);
 	// console.log("first trade:", trades[0]);
+	points.push({
+		price: getCurrentPrice(card),
+		timestamp: new Date(),
+	});
 	return points;
 };
 
