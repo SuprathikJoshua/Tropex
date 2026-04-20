@@ -4,10 +4,11 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
-		"dev": "bun --watch run src/index.ts"
+		"dev": "bun --watch run src/index.ts",
+		"start": "bun run src/index.ts"
 	},
 	"prisma": {
-  	"seed": "bun --env-file=.env run prisma/seed.ts"
+		"seed": "bun --env-file=.env run prisma/seed.ts"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
