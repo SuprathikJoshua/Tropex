@@ -6,7 +6,9 @@ import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import apiClient from "@/lib/api";
 
 interface User {
-	balance: number;
+	wallet: {
+		balance: number;
+	};
 }
 
 export default function DashboardLayout({
@@ -24,6 +26,8 @@ export default function DashboardLayout({
 				const response = await apiClient.get("/auth/me");
 				if (response.status === 200) {
 					setUser(response.data.data);
+					// console.log("User balance: ", response.data.data.wallet.balance);
+					// console.log(user);
 					setIsChecking(false);
 				}
 			} catch (err) {
@@ -48,7 +52,7 @@ export default function DashboardLayout({
 
 	return (
 		<div className="flex">
-			<DashboardSidebar balance={user.balance} />
+			<DashboardSidebar balance={user.wallet.balance} />
 			<main className="ml-60 w-full" style={{ backgroundColor: "#0D0D0D" }}>
 				{children}
 			</main>

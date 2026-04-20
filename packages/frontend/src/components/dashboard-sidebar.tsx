@@ -22,7 +22,9 @@ export function DashboardSidebar({
 	const refreshBalance = useCallback(async () => {
 		try {
 			const res = await apiClient.get("/auth/me");
-			setBalance(toNum(res.data.data.balance));
+			console.log("Wallet balance: ", toNum(res.data.wallet.balance));
+
+			setBalance(toNum(res.data.wallet.balance));
 		} catch {}
 	}, []);
 
