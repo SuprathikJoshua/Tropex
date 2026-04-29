@@ -12,6 +12,24 @@ datasource db {
   provider = "postgresql"
 }
 
+enum CardStatus {
+  IPO_ACTIVE
+  LIVE
+  DELISTED
+}
+
+enum CardTier {
+  COMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+enum IPOSubStatus {
+  PENDING
+  CONFIRMED
+  REFUNDED
+}
 enum TradeType {
   BUY
   SELL
@@ -26,7 +44,8 @@ model User {
   wallet    Wallet?
   trades    Trade[]
   holdings  Holding[]
-  cards     Card[]   @relation("Creator")
+  createdCards     Card[]            @relation("CreatedCards")
+  ipoSubscriptions IPOSubscription[]
 }
 
 model Wallet {
@@ -43,8 +62,14 @@ model Wallet {
 model Card {
   id            String    @id @default(cuid())
   name          String
-  creatorId     String
-  creator       User      @relation("Creator", fields: [creatorId], references: [id])
+  creatorId        String?
+  creator          User?            @relation("CreatedCards", fields: [creatorId], references: [id])
+  status           CardStatus       @default(LIVE)
+  tier             CardTier         @default(COMMON)
+  ipoEndsAt        DateTime?
+  ipoPrice         Decimal?         @db.Decimal(18, 4)
+  royaltyPct       Decimal          @default(0) @db.Decimal(10, 6)
+  ipoSubscriptions IPOSubscription[]
   basePrice     Decimal   @db.Decimal(18, 4)
   maxPrice      Decimal   @db.Decimal(18, 4)
   sensitivity   Decimal   @db.Decimal(10, 6)
@@ -111,4 +136,17 @@ model RescueLog {
 
   @@unique([walletId, seasonId])
   @@index([walletId])
+}
+model IPOSubscription {
+  id        String       @id @default(cuid())
+  cardId    String
+  card      Card         @relation(fields: [cardId], references: [id])
+  userId    String
+  user      User         @relation(fields: [userId], references: [id])
+  quantity  Int
+  totalCost        Decimal          @db.Decimal(18, 4)
+  status    IPOSubStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+
+  @@unique([cardId, userId])
 }
