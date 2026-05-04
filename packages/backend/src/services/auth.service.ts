@@ -58,6 +58,7 @@ export const registerService = async ({
 					id: supabaseUserId,
 					username,
 					fullname,
+					email,
 				},
 			}),
 			prisma.wallet.create({
@@ -109,15 +110,7 @@ export const loginService = async ({
 			throw new ApiError(400, "Invalid username or password");
 		}
 
-		const { data: supabaseUser } = await supabase.auth.admin.getUserById(
-			user.id,
-		);
-
-		if (!supabaseUser.user) {
-			throw new ApiError(400, "Invalid username or password");
-		}
-
-		email = supabaseUser.user.email!;
+		email = user.email; // directly from Prisma, no Supabase admin call
 	}
 
 	const { data: signInData, error: signInError } =
