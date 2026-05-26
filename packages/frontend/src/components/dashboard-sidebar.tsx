@@ -46,6 +46,7 @@ export function DashboardSidebar({
 	const navItems = [
 		{ href: "/dashboard", label: "Dashboard" },
 		{ href: "/marketplace", label: "Marketplace" },
+		{ href: "/ipo", label: "IPOs" },
 		{ href: "/leaderboard", label: "Leaderboard" },
 		{ href: "/wallet", label: "Wallet" },
 		{ href: "/profile", label: "Profile" },

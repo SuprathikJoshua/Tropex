@@ -122,8 +122,16 @@ export const getActiveIposService = async () => {
 	// Logic to get active IPOs
 	const activeIpos = await prisma.card.findMany({
 		where: { status: "IPO_ACTIVE" },
+		include: { creator: { select: { username: true } } },
 	});
-	return activeIpos;
+	return activeIpos.map((card) => ({
+		cardId: card.id,
+		cardName: card.name,
+		tier: card.tier,
+		ipoPrice: card.ipoPrice,
+		endTime: card.ipoEndsAt,
+		creatorUsername: card.creator?.username ?? "Unknown",
+	}));
 };
 
 /**
