@@ -4,7 +4,10 @@ import type { Request, Response } from "express";
 import { TIER_CONFIG } from "../config/tier";
 import prisma from "../lib/prisma";
 import type { CardTierKey } from "../config/tier";
-import { createCardService } from "../services/cards.service";
+import {
+	createCardService,
+	getMyCardsService,
+} from "../services/cards.service";
 
 export const createCard = async (req: Request, res: Response) => {
 	const userId = req.userId!;
@@ -36,4 +39,12 @@ export const createCard = async (req: Request, res: Response) => {
 		console.error("Card create error:", err);
 		return res.status(500).json(new ApiError(500, "Internal server error"));
 	}
+};
+
+export const getMyCards = async (req: Request, res: Response) => {
+	const userId = req.userId!;
+	const data = await getMyCardsService(userId);
+	return res
+		.status(200)
+		.json(new ApiResponse(200, data, "Creator dashboard fetched"));
 };

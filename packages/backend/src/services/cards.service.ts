@@ -1,3 +1,5 @@
+import { getPrice } from "../lib/pricing-engine";
+import { Decimal } from "decimal.js";
 import prisma from "../lib/prisma";
 import ApiError from "../utils/ApiError";
 import type { CardTierKey } from "../config/tier";
@@ -61,4 +63,65 @@ export const createCardService = async (
 			},
 		}),
 	]);
+};
+export const getMyCardsService = async (userId: string) => {
+	const cards = await prisma.card.findMany({
+		where: { creatorId: userId },
+		include: {
+			trades: { select: { totalCost: true } },
+		},
+	});
+
+	const wallet = await prisma.wallet.findUnique({ where: { userId } });
+
+	// Sum all ROYALTY ledger entries for this user
+	const royaltyLedger = await prisma.balanceLedger.aggregate({
+		where: {
+			walletId: wallet!.id,
+			reason: "ROYALTY",
+		},
+		_sum: { delta: true },
+	});
+
+	const totalRoyaltiesEarned = Number(royaltyLedger._sum.delta ?? 0);
+
+	const formattedCards = cards.map((card) => {
+		const curveParams = {
+			basePrice: new Decimal(card.basePrice.toString()),
+			maxPrice: new Decimal(card.maxPrice.toString()),
+			sensitivity: new Decimal(card.sensitivity.toString()),
+			totalSupply: new Decimal(1_000_000),
+		};
+
+		const currentPrice = getPrice(
+			new Decimal(card.currentSupply.toString()),
+			curveParams,
+		);
+
+		const totalVolume = card.trades.reduce(
+			(acc, t) => acc + Number(t.totalCost),
+			0,
+		);
+
+		return {
+			id: card.id,
+			name: card.name,
+			tier: card.tier,
+			status: card.status,
+			currentPrice: Number(currentPrice),
+			totalTrades: card.trades.length,
+			royaltiesEarned: 0, // per-card royalty needs RoyaltyLog model — V3
+		};
+	});
+
+	return {
+		totalCardsCreated: cards.length,
+		totalRoyaltiesEarned,
+		totalVolumeGenerated: formattedCards.reduce(
+			(acc, c) => acc + c.totalTrades,
+			0,
+		),
+		activeIPOs: cards.filter((c) => c.status === "IPO_ACTIVE").length,
+		cards: formattedCards,
+	};
 };
