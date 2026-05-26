@@ -91,6 +91,8 @@ export const buyCardService = async (
 	const cost = getBuyCost(currentSupply, amountDecimal, curveParams);
 	const totalCost = applySlippage(cost, slippage);
 
+	const royaltyAmount = totalCost.mul(card.royaltyPct);
+
 	const result = await prisma.$transaction(async (tx) => {
 		// 1. Fetch wallet
 		const wallet = await tx.wallet.findUnique({
@@ -160,6 +162,33 @@ export const buyCardService = async (
 				tradeId: trade.id,
 			},
 		});
+
+		// 8. Pay royalty to creator
+		if (card.creatorId && royaltyAmount.gt(0)) {
+			const creatorWallet = await tx.wallet.findUnique({
+				where: { userId: card.creatorId },
+			});
+
+			if (creatorWallet) {
+				await tx.wallet.update({
+					where: { userId: card.creatorId },
+					data: {
+						balance: {
+							increment: royaltyAmount.toString(),
+						},
+					},
+				});
+
+				await tx.balanceLedger.create({
+					data: {
+						walletId: creatorWallet.id,
+						delta: royaltyAmount.toString(),
+						reason: "ROYALTY",
+						tradeId: trade.id,
+					},
+				});
+			}
+		}
 
 		return { trade, newBalance, wallet };
 	});
@@ -265,7 +294,36 @@ export const sellCardService = async (
 			},
 		});
 
-		// 8. Update card supply + version
+		// 8. Pay royalty to creator
+		const royaltyAmount = cost.mul(card.royaltyPct);
+
+		if (card.creatorId && royaltyAmount.gt(0)) {
+			const creatorWallet = await tx.wallet.findUnique({
+				where: { userId: card.creatorId },
+			});
+
+			if (creatorWallet) {
+				await tx.wallet.update({
+					where: { userId: card.creatorId },
+					data: {
+						balance: {
+							increment: royaltyAmount.toString(),
+						},
+					},
+				});
+
+				await tx.balanceLedger.create({
+					data: {
+						walletId: creatorWallet.id,
+						delta: royaltyAmount.toString(),
+						reason: "ROYALTY",
+						tradeId: trade.id,
+					},
+				});
+			}
+		}
+
+		// 9. Update card supply + version
 		await tx.card.update({
 			where: { id: cardId },
 			data: {
