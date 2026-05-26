@@ -29,6 +29,7 @@ enum IPOSubStatus {
   PENDING
   CONFIRMED
   REFUNDED
+  CANCELLED
 }
 enum TradeType {
   BUY
@@ -145,7 +146,7 @@ model IPOSubscription {
   userId    String
   user      User         @relation(fields: [userId], references: [id])
   quantity  Int
-  totalCost        Decimal          @db.Decimal(18, 4)
+  totalCost        Decimal          @db.Decimal(18, 4) // 
   status    IPOSubStatus @default(PENDING)
   createdAt DateTime     @default(now())
 

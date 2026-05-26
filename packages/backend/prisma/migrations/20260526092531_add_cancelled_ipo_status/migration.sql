@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "IPOSubStatus" ADD VALUE 'CANCELLED';
