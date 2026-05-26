@@ -162,6 +162,14 @@ export const cancelIpoSubscriptionService = async (
 		throw new ApiError(400, "Only pending IPO subscriptions can be cancelled");
 	}
 
+	const userWallet = await prisma.wallet.findUnique({ where: { userId } });
+	if (!userWallet) throw new ApiError(404, "Wallet not found");
+
+	const card = await prisma.card.findUnique({ where: { id: cardId } });
+	if (card?.ipoEndsAt && card.ipoEndsAt < new Date()) {
+		throw new ApiError(400, "IPO already ended. Cannot cancel.");
+	}
+
 	// Transaction of cancelling IPO subscription
 	await prisma.$transaction(async (tx) => {
 		// Update IPO subscription status to
@@ -184,7 +192,7 @@ export const cancelIpoSubscriptionService = async (
 		// Append to balance ledger
 		await tx.balanceLedger.create({
 			data: {
-				walletId: (await tx.wallet.findUnique({ where: { userId } }))!.id,
+				walletId: userWallet.id,
 				delta: refundAmount,
 				reason: "IPO_SUBSCRIPTION_REFUND",
 			},
