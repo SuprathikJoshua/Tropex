@@ -8,6 +8,7 @@ import tradeRoutes from "./routes/trade.routes";
 import walletRoutes from "./routes/wallet.routes";
 import leaderboardRoutes from "./routes/leaderboard.routes";
 import portfolioRoutes from "./routes/portfolio.route";
+import ipoRoutes from "./routes/ipo.routes";
 const app = express();
 
 app.use(express.json());
@@ -30,6 +31,7 @@ app.use("/api/v1/trade", tradeRoutes);
 app.use("/api/v1/wallet", walletRoutes);
 app.use("/api/v1/leaderboard", leaderboardRoutes);
 app.use("/api/v1/portfolio", portfolioRoutes);
+app.use("/api/v1/ipo", ipoRoutes);
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {

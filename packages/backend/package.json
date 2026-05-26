@@ -14,14 +14,14 @@
 		"@types/bun": "latest",
 		"@types/node-cron": "^3.0.11",
 		"@types/pg": "^8.18.0",
-		"prisma": "^7.5.0"
+		"prisma": "^7.8.0"
 	},
 	"peerDependencies": {
 		"typescript": "^5"
 	},
 	"dependencies": {
 		"@prisma/adapter-pg": "^7.5.0",
-		"@prisma/client": "^7.5.0",
+		"@prisma/client": "^7.8.0",
 		"@supabase/ssr": "^0.9.0",
 		"@supabase/supabase-js": "^2.99.1",
 		"@types/cookie-parser": "^1.4.10",
@@ -30,7 +30,7 @@
 		"cookie-parser": "^1.4.7",
 		"cors": "^2.8.6",
 		"decimal.js": "^10.6.0",
-		"dotenv": "^17.3.1",
+		"dotenv": "^17.4.2",
 		"express": "^5.2.1",
 		"helmet": "^8.1.0",
 		"node-cron": "^4.2.1",
