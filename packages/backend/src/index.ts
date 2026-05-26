@@ -9,6 +9,7 @@ import walletRoutes from "./routes/wallet.routes";
 import leaderboardRoutes from "./routes/leaderboard.routes";
 import portfolioRoutes from "./routes/portfolio.route";
 import ipoRoutes from "./routes/ipo.routes";
+import "./jobs/ipoSettlement.job";
 const app = express();
 
 app.use(express.json());
