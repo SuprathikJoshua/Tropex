@@ -4,6 +4,6 @@ import { createCard } from "../controllers/cards.controller";
 
 const router = Router();
 
-router.post("/cards/create", verifyJWT, createCard);
+router.post("/create", verifyJWT, createCard);
 
 export default router;
