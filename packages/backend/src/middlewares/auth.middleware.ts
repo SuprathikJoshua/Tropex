@@ -17,6 +17,7 @@ export const verifyJWT = asyncHandler(
 
 		// Verify token with Supabase — no manual JWT verification needed
 		const { data, error } = await supabase.auth.getUser(token);
+		console.log(data.user);
 
 		if (error || !data.user) {
 			throw new ApiError(401, "Invalid or expired token");
