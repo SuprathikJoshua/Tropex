@@ -17,8 +17,11 @@ apiClient.interceptors.response.use(
 
 		// If 401 and not already retried, attempt token refresh
 		if (error.response?.status === 401 && !originalRequest._retry) {
+			if (originalRequest.url?.includes("/auth/refresh")) {
+				window.location.href = "/login";
+				return Promise.reject(error);
+			}
 			originalRequest._retry = true;
-
 			try {
 				// Attempt to refresh the token
 				await apiClient.post("/auth/refresh");
