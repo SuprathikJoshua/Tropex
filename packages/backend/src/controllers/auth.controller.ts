@@ -33,14 +33,14 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 	res.cookie("access_token", session!.access_token, {
 		httpOnly: true, // JS cannot access this cookie — prevents XSS
 		secure: process.env.NODE_ENV === "production", // HTTPS only in prod
-		sameSite: "strict", // prevents CSRF
+		sameSite: "none", // prevents CSRF
 		maxAge: 60 * 60 * 1000, // 1 hour (matches Supabase access token expiry)
 	});
 
 	res.cookie("refresh_token", session!.refresh_token, {
 		httpOnly: true,
 		secure: process.env.NODE_ENV === "production",
-		sameSite: "strict",
+		sameSite: "none",
 		maxAge: 60 * 60 * 24 * 7 * 1000, // 7 days (matches Supabase refresh token expiry)
 	});
 	res
@@ -69,14 +69,14 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 	res.cookie("access_token", session.access_token, {
 		httpOnly: true, // JS cannot access this cookie — prevents XSS
 		secure: process.env.NODE_ENV === "production", // HTTPS only in prod
-		sameSite: "strict", // prevents CSRF
+		sameSite: "none", // prevents CSRF
 		maxAge: 60 * 60 * 1000, // 1 hour (matches Supabase access token expiry)
 	});
 
 	res.cookie("refresh_token", session.refresh_token, {
 		httpOnly: true,
 		secure: process.env.NODE_ENV === "production",
-		sameSite: "strict",
+		sameSite: "none",
 		maxAge: 60 * 60 * 24 * 7 * 1000, // 7 days (matches Supabase refresh token expiry)
 	});
 	res
@@ -118,14 +118,14 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
 	res.cookie("access_token", session.access_token, {
 		httpOnly: true,
 		secure: process.env.NODE_ENV === "production",
-		sameSite: "strict",
+		sameSite: "none",
 		maxAge: 60 * 60 * 1000,
 	});
 
 	res.cookie("refresh_token", session.refresh_token, {
 		httpOnly: true,
 		secure: process.env.NODE_ENV === "production",
-		sameSite: "strict",
+		sameSite: "none",
 		maxAge: 60 * 60 * 24 * 7 * 1000,
 	});
 	return res
