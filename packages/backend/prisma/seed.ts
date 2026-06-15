@@ -32,6 +32,7 @@ async function main() {
 			id: "system-tropexbank",
 			username: "tropexbank",
 			fullname: "Tropex Bank",
+			email: "tropexbank@system.internal",
 		},
 	});
 
