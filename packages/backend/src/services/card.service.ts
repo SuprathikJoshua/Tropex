@@ -2,6 +2,7 @@ import Decimal from "decimal.js";
 import { getCurrentPrice } from "../lib/pricing-engine";
 import prisma from "../lib/prisma";
 import ApiError from "../utils/ApiError";
+import { sellCardService } from "./trade.service";
 
 export const getAllCardsService = async () => {
 	const onedayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -138,6 +139,13 @@ export const getCardTradesService = async (cardId: string) => {
 		where: { cardId },
 		orderBy: { createdAt: "desc" },
 		take: 20,
+		include: {
+			player: {
+				select: {
+					username: true,
+				},
+			},
+		},
 	});
 	return trades;
 };

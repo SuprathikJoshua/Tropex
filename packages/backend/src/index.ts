@@ -10,9 +10,13 @@ import leaderboardRoutes from "./routes/leaderboard.routes";
 import portfolioRoutes from "./routes/portfolio.route";
 import ipoRoutes from "./routes/ipo.routes";
 import "./jobs/ipoSettlement.job";
+import * as dotenv from "dotenv";
+dotenv.config();
 const app = express();
 
 app.use(express.json());
+console.log(process.env.FRONTEND_URL);
+
 app.use(
 	cors({
 		origin: process.env.FRONTEND_URL,

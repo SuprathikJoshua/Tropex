@@ -30,6 +30,10 @@ interface ChartData {
 interface TradeHistoryItem {
 	id: string;
 	type: "BUY" | "SELL";
+	playerId: string;
+	player: {
+		username: string;
+	};
 	amount: number;
 	price: number;
 	timestamp: string;
@@ -57,6 +61,8 @@ export default function CardDetailPage({
 	useEffect(() => {
 		params.then((p) => setCardId(p.id));
 	}, [params]);
+
+	console.log(cardId);
 
 	useEffect(() => {
 		if (!cardId) return;
@@ -86,6 +92,7 @@ export default function CardDetailPage({
 				setHoldings(Number(holding?.quantity ?? 0));
 
 				setTradeHistory(tradesRes.data.data.trades ?? []);
+				console.log(tradesRes.data.data.trades);
 			} catch (err) {
 				console.error("Failed to fetch data:", err);
 				if ((err as any).response?.status === 401) {
@@ -396,7 +403,7 @@ export default function CardDetailPage({
 									>
 										<div>
 											<span style={{ color: "#E8E8E8" }}>
-												{trade.id.slice(0, 8)}...
+												{trade.player.username}
 											</span>
 											<span
 												className="ml-2 px-2 py-1 rounded text-xs font-bold"
